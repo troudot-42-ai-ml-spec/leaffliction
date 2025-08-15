@@ -1,0 +1,36 @@
+[flake8]
+# Maximum line length
+max-line-length = 88
+
+# Ignore specific error codes
+# E203: whitespace before ':' (conflicts with black)
+# W503: line break before binary operator (conflicts with black)
+extend-ignore = E203, W503
+
+# Exclude directories from linting
+exclude = 
+    .git,
+    .github,
+    __pycache__,
+    build,
+    dist,
+    .venv,
+    venv,
+    .tox,
+    .eggs,
+    *.egg
+
+# Maximum cyclomatic complexity
+max-complexity = 10
+
+# Import order settings
+import-order-style = google
+application-import-names = leaffliction
+
+# Docstring settings
+docstring-convention = google
+
+# Per-file ignores
+per-file-ignores =
+    __init__.py:F401
+    tests/*:D100,D101,D102,D103,D104

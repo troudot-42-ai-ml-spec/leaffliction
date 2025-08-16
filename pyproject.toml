@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "A PyTorch-based leaf disease classification project"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "attrs>=25.3.0",
+    "matplotlib>=3.10.5",
+]
 
 [project.optional-dependencies]
 dev = []

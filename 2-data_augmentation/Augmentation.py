@@ -2,24 +2,11 @@ import argparse
 import cv2
 import numpy as np
 import shutil
+import random
 import albumentations as A
 import matplotlib.pyplot as plt
 from pathlib import Path
-
-def get_random_augmentation():
-    """
-        Applies one random augmentation from the dict.
-    """
-    return A.Compose([
-        A.OneOf([
-            A.HorizontalFlip(p=1.0),
-            A.Rotate(limit=45, p=1.0, border_mode=cv2.BORDER_CONSTANT),
-            A.Affine(scale=(0.9, 1.1), rotate=(-15, 15), translate_percent={'x': (-0.1, 0.1)}, p=1.0),
-            A.Affine(shear={'x': (-25, 25)}, p=1.0),
-            A.CenterCrop(height=200, width=200, p=1.0),
-            A.Perspective(scale=(0.05, 0.1), p=1.0)
-        ], p=1.0)
-    ])
+from collections import defaultdict
 
 def get_augmentations():
     """
@@ -76,56 +63,81 @@ def process_file(input_path: Path):
     plt.show()
     
 
-def parse_dir(input_path: Path):
+def parse_dir(input_path: Path) -> Path:
     """
-        Verify directory validity, to reorganise it for processing.
+    Scans a directory for subfolders, groups them by a common prefix
+    (e.g., 'Apple_' from 'Apple_healthy'), and copies them into a new,
+    organized 'augmented_directory'.
     """
-    items_list = list(input_path.iterdir())
-    for item in items_list:
-        if item.is_file():
-            if item.name == ".DS_Store":
-                continue
-            raise Exception(f"❌ An item in {input_path} directory is not a subdirectory.")
-    subdirs = items_list
-    i: int = 0
-    if len(subdirs) != 8:
-        for subdir in subdirs:
-            if subdir.name == ".DS_Store":
-                i += 1
-                break
-        if i == len(subdirs):
-            raise Exception(f"Expected 8 subdirectories in {input_path} but found {len(subdirs)}")
+    augmented_dir = input_path.parent / "augmented_directory"
+    augmented_dir.mkdir(exist_ok=True)
 
-    main_dir = input_path.parent / "augmented_directory"
-    main_dir.mkdir(exist_ok=True)
-    apple_dir = main_dir / "Apple"
-    grape_dir = main_dir / "Grape"
-    apple_dir.mkdir(exist_ok=True)
-    grape_dir.mkdir(exist_ok=True)
+    grouped_dirs = defaultdict(list)
+    for item in input_path.iterdir():
+        if item.is_dir():
+            if '_' in item.name:
+                prefix = item.name.split('_')[0]
+                grouped_dirs[prefix].append(item)
+        elif item.name != ".DS_Store":
+            raise ValueError(f"❌ Expected only subdirectories in '{input_path.name}', but found file: '{item.name}'")
 
-    ignore_list = [".DS_Store", "Apple", "Grape"]
-    for subdir in subdirs:
-        if subdir.name.startswith("Apple_"):
-            for image in subdir.iterdir():
-                parse_file(input_path / subdir.name / image)
-            destination = apple_dir / subdir.name
-            shutil.copytree(subdir, destination, dirs_exist_ok=True)
-        elif subdir.name.startswith("Grape_"):
-            for image in subdir.iterdir():
-                parse_file(input_path / subdir.name / image)
-            destination = grape_dir / subdir.name
-            shutil.copytree(subdir, destination, dirs_exist_ok=True)
-        else:
-            if subdir.name not in ignore_list:
-                raise Exception(f"Expected 4 Apple_ and 4 Grape_ subdirs in {input_path}, but one name doesnt match.")
-    return main_dir
+    if len(grouped_dirs) < 2:
+        raise ValueError(f"❌ Expected at least 2 groups of subdirectories (e.g., 'Apple_*', 'Grape_*'), but found {len(grouped_dirs)}.")
+
+    print("✅ Directory structure is valid. Organizing...")
+
+    for prefix, dir_list in grouped_dirs.items():
+        destination_folder = augmented_dir / prefix
+        destination_folder.mkdir(exist_ok=True)
+        
+        print(f"\nProcessing group '{prefix}':")
+        for source_dir in dir_list:
+            destination = destination_folder / source_dir.name
+            shutil.copytree(source_dir, destination, dirs_exist_ok=True)
+            print(f"  -> Copied '{source_dir.name}' to '{destination_folder.name}'")
+
+    return augmented_dir
 
 def process_dir(new_path: Path):
     """
         Defines the biggest subdirectory, then balances the others using augmentation to match the number of elements.
     """
-    
-    print(new_path)
+    max_count = 0
+    folder_counts = {}
+    for root, dirs, files in new_path.walk():
+        if not dirs:
+            folder_name = Path(root).name
+            image_files = [f for f in files if f != ".DS_Store"]
+            current_count = len(image_files)
+            folder_counts[folder_name] = current_count
+            if current_count > max_count:
+                max_count = current_count
+
+    aug = list(get_augmentations().items())
+    for root, dirs, files in new_path.walk():
+        if not dirs:
+            current_path = Path(root)
+            folder_name = current_path.name
+            num_to_generate = max_count - folder_counts[folder_name]
+            if num_to_generate <= 0:
+                continue
+            image_paths = [current_path / f for f in files if f != ".DS_Store"]
+            for i in range(num_to_generate):
+                source_image_path = random.choice(image_paths)
+                aug_name, aug_obj = random.choice(aug)
+                image_bgr = cv2.imread(str(source_image_path))
+                if image_bgr is None:
+                    raise Exception(f"Could not read image file: {current_path}")
+                image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+                transform = A.Compose([aug_obj])
+                new_image = transform(image=image_rgb)['image']
+                augmented_bgr = cv2.cvtColor(new_image, cv2.COLOR_RGB2BGR)
+                counter = 1
+                new_path = current_path / f"{source_image_path.stem}_{aug_name}_{counter}{source_image_path.suffix}"
+                while new_path.exists():
+                    counter+=1
+                    new_path = current_path / f"{source_image_path.stem}_{aug_name}_{counter}{source_image_path.suffix}"
+                cv2.imwrite(str(new_path), augmented_bgr)
 
 def main():
     parser = argparse.ArgumentParser()

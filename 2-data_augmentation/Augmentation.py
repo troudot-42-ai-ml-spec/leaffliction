@@ -86,10 +86,9 @@ def parse_dir(input_path: Path) -> Path:
 
     grouped_dirs = defaultdict(list)
     for item in input_path.iterdir():
-        if item.is_dir():
-            if "_" in item.name:
-                prefix = item.name.split("_")[0]
-                grouped_dirs[prefix].append(item)
+        if item.is_dir() and "_" in item.name:
+            prefix = item.name.split("_")[0]
+            grouped_dirs[prefix].append(item)
         elif item.name != ".DS_Store":
             raise ValueError(
                 f"❌ Expected only subdirectories in '{input_path.name}',\
@@ -117,55 +116,78 @@ def parse_dir(input_path: Path) -> Path:
     return augmented_dir
 
 
+def get_folder_info(new_path: Path) -> dict:
+    """Get all the images paths for processing"""
+    folder_info = {}
+    for root, dirs, files in new_path.walk():
+        if not dirs:
+            current_path = Path(root)
+            image_paths = [current_path / f for f in files if f != ".DS_Store"]
+            folder_info[current_path] = image_paths
+    if not folder_info:
+        raise Exception(f"❌ No images found in {new_path}")
+    return folder_info
+
+
+def augment_one_image(current_path: Path, image_paths: Path, aug: dict):
+    """
+    Augments one single random image in the folder passed as argument
+    """
+    source_image_path = random.choice(image_paths)
+    aug_name, aug_obj = random.choice(aug)
+    image_bgr = cv2.imread(str(source_image_path))
+
+    if image_bgr is None:
+        raise Exception(f"Could not read image file: {current_path}")
+
+    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    transform = A.Compose([aug_obj])
+    new_image = transform(image=image_rgb)["image"]
+    augmented_bgr = cv2.cvtColor(new_image, cv2.COLOR_RGB2BGR)
+
+    counter = 1
+    new_path = (
+        current_path
+        / f"{source_image_path.stem}_{aug_name}_{counter}\
+{source_image_path.suffix}"
+    )
+    while new_path.exists():
+        counter += 1
+        new_path = (
+            current_path
+            / f"{source_image_path.stem}_{aug_name}_{counter}\
+{source_image_path.suffix}"
+        )
+
+    cv2.imwrite(str(new_path), augmented_bgr)
+
+
 def process_dir(new_path: Path):
     """
     Defines the biggest subdirectory, then balances the others using\
          augmentation to match the number of elements.
     """
+    folder_info = get_folder_info(new_path)
     max_count = 0
-    folder_counts = {}
-    for root, dirs, files in new_path.walk():
-        if not dirs:
-            folder_name = Path(root).name
-            image_files = [f for f in files if f != ".DS_Store"]
-            current_count = len(image_files)
-            folder_counts[folder_name] = current_count
-            if current_count > max_count:
-                max_count = current_count
+    for images in folder_info.values():
+        if len(images) > max_count:
+            max_count = len(images)
 
     aug = list(get_augmentations().items())
-    for root, dirs, files in new_path.walk():
-        if not dirs:
-            current_path = Path(root)
-            folder_name = current_path.name
-            num_to_generate = max_count - folder_counts[folder_name]
-            if num_to_generate <= 0:
-                continue
-            image_paths = [current_path / f for f in files if f != ".DS_Store"]
-            for i in range(num_to_generate):
-                source_image_path = random.choice(image_paths)
-                aug_name, aug_obj = random.choice(aug)
-                image_bgr = cv2.imread(str(source_image_path))
-                if image_bgr is None:
-                    raise Exception(f"Could not read image file: {current_path}")
-                image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
-                transform = A.Compose([aug_obj])
-                new_image = transform(image=image_rgb)["image"]
-                augmented_bgr = cv2.cvtColor(new_image, cv2.COLOR_RGB2BGR)
-                counter = 1
-                new_path = (
-                    current_path
-                    / f"{source_image_path.stem}_{aug_name}_{counter}\
-                        {source_image_path.suffix}"
-                )
-                while new_path.exists():
-                    counter += 1
-                    new_path = (
-                        current_path
-                        / f"{source_image_path.stem}_{aug_name}_{counter}\
-                            {source_image_path.suffix}"
-                    )
-                cv2.imwrite(str(new_path), augmented_bgr)
+
+    for current_path, image_paths in folder_info.items():
+
+        num_to_generate = max_count - len(image_paths)
+        if num_to_generate <= 0:
+            continue
+
+        print(
+            f"Balancing '{current_path.name}': \
+            Generating {num_to_generate} new images..."
+        )
+
+        for i in range(num_to_generate):
+            augment_one_image(current_path, image_paths, aug)
 
 
 def main():

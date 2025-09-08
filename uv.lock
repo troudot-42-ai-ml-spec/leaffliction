@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.13"
 resolution-markers = [
     "sys_platform == 'darwin'",
@@ -434,7 +434,7 @@ dependencies = [
     { name = "matplotlib" },
     { name = "opencv-python" },
     { name = "pillow" },
-    { name = "tensorflow-cpu" },
+    { name = "tensorflow" },
 ]
 
 [package.metadata]
@@ -446,7 +446,7 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.10.5" },
     { name = "opencv-python", specifier = ">=4.12.0.88" },
     { name = "pillow", specifier = ">=11.3.0" },
-    { name = "tensorflow-cpu", specifier = ">=2.20.0" },
+    { name = "tensorflow", specifier = ">=2.20.0" },
 ]
 provides-extras = ["dev"]
 
@@ -469,11 +469,11 @@ wheels = [
 
 [[package]]
 name = "markdown"
-version = "3.8.2"
+version = "3.9"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d7/c2/4ab49206c17f75cb08d6311171f2d65798988db4360c4d1485bd0eedd67c/markdown-3.8.2.tar.gz", hash = "sha256:247b9a70dd12e27f67431ce62523e675b866d254f900c4fe75ce3dda62237c45", size = 362071, upload-time = "2025-06-19T17:12:44.483Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8d/37/02347f6d6d8279247a5837082ebc26fc0d5aaeaf75aa013fcbb433c777ab/markdown-3.9.tar.gz", hash = "sha256:d2900fe1782bd33bdbbd56859defef70c2e78fc46668f8eb9df3128138f2cb6a", size = 364585, upload-time = "2025-09-04T20:25:22.885Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/2b/34cc11786bc00d0f04d0f5fdc3a2b1ae0b6239eef72d3d345805f9ad92a1/markdown-3.8.2-py3-none-any.whl", hash = "sha256:5c83764dbd4e00bdd94d85a19b8d55ccca20fe35b2e678a1422b380324dd5f24", size = 106827, upload-time = "2025-06-19T17:12:42.994Z" },
+    { url = "https://files.pythonhosted.org/packages/70/ae/44c4a6a4cbb496d93c6257954260fe3a6e91b7bed2240e5dad2a717f5111/markdown-3.9-py3-none-any.whl", hash = "sha256:9f4d91ed810864ea88a6f32c07ba8bee1346c0cc1f6b1f9f6c822f2a9667d280", size = 107441, upload-time = "2025-09-04T20:25:21.784Z" },
 ]
 
 [[package]]
@@ -1139,7 +1139,7 @@ wheels = [
 ]
 
 [[package]]
-name = "tensorflow-cpu"
+name = "tensorflow"
 version = "2.20.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
@@ -1166,8 +1166,10 @@ dependencies = [
     { name = "wrapt" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1a/9e/594164db23e3e262da1a0e8983258811eff56e5af6b7b6da5eccccb8d4c7/tensorflow_cpu-2.20.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:da6e7791e5e10ec84e6225c45e04fee05f33d7b828c9b61cc905f4146f7c64b5", size = 259121810, upload-time = "2025-08-13T16:56:10.861Z" },
-    { url = "https://files.pythonhosted.org/packages/eb/35/d0f37f218ffd63e41af52b31e0508ef488499be60956c7ac90d0caee0fc5/tensorflow_cpu-2.20.0-cp313-cp313-win_amd64.whl", hash = "sha256:510bb97f6f15337c7c45c113c20704662a07cd87d21b820748ae270ad07c5eda", size = 332012268, upload-time = "2025-08-13T16:56:21.907Z" },
+    { url = "https://files.pythonhosted.org/packages/04/82/af283f402f8d1e9315644a331a5f0f326264c5d1de08262f3de5a5ade422/tensorflow-2.20.0-cp313-cp313-macosx_12_0_arm64.whl", hash = "sha256:197f0b613b38c0da5c6a12a8295ad4a05c78b853835dae8e0f9dfae3ce9ce8a5", size = 200671458, upload-time = "2025-08-13T16:53:16.568Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/4c/c1aa90c5cc92e9f7f9c78421e121ef25bae7d378f8d1d4cbad46c6308836/tensorflow-2.20.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:47c88e05a07f1ead4977b4894b3ecd4d8075c40191065afc4fd9355c9db3d926", size = 259663776, upload-time = "2025-08-13T16:53:24.507Z" },
+    { url = "https://files.pythonhosted.org/packages/43/fb/8be8547c128613d82a2b006004026d86ed0bd672e913029a98153af4ffab/tensorflow-2.20.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5fa3729b0126f75a99882b89fb7d536515721eda8014a63e259e780ba0a37372", size = 620815537, upload-time = "2025-08-13T16:53:42.577Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/9e/02e201033f8d6bd5f79240b7262337de44c51a6cfd85c23a86c103c7684d/tensorflow-2.20.0-cp313-cp313-win_amd64.whl", hash = "sha256:c25edad45e8cb9e76366f7a8c835279f9169028d610f3b52ce92d332a1b05438", size = 332012220, upload-time = "2025-08-13T16:53:57.303Z" },
 ]
 
 [[package]]

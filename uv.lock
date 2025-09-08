@@ -425,7 +425,7 @@ wheels = [
 [[package]]
 name = "leaffliction"
 version = "0.1.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "albumentationsx" },
     { name = "attrs" },
@@ -448,7 +448,6 @@ requires-dist = [
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "tensorflow", specifier = ">=2.20.0" },
 ]
-provides-extras = ["dev"]
 
 [[package]]
 name = "libclang"

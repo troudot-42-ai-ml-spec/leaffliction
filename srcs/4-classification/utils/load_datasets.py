@@ -4,7 +4,10 @@ from pathlib import Path
 
 
 def load_datasets(train_set: Path, test_set: Path):
-    # --- Setup training and validation sets ---
+    """
+        Takes the train set to split it into training and validation sets.
+        Turns train, validation and test sets as tf.data.Dataset.
+    """
     train_dataset = tf.keras.utils.image_dataset_from_directory(
         train_set,
         labels='inferred',

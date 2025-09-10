@@ -4,6 +4,9 @@ from .hyperparams import IMG_HEIGHT, IMG_WIDTH, CLASSES
 
 
 def build_model() -> Sequential:
+    """
+        Build the CNN structure here.
+    """
     model = keras.Sequential(
         [
             keras.Input(shape=(IMG_HEIGHT, IMG_WIDTH, 3)),

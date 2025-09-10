@@ -2,6 +2,9 @@ from .hyperparams import EPOCHS
 
 
 def train_model(model, train_set, val_set, test_set):
+    """
+        Compile and train CNN, then evaluate it against test set.
+    """
     model.compile(
         optimizer='adam',
         loss='sparse_categorical_crossentropy',

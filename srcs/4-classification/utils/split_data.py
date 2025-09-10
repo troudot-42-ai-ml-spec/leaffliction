@@ -4,7 +4,7 @@ import random
 from pathlib import Path
 
 
-def split_data(input_path: Path) -> None:
+def split_data(input_path: Path) -> Path:
 
     test_set = input_path.parent / "test_set"
     test_set.mkdir(exist_ok=True)
@@ -48,3 +48,4 @@ def split_data(input_path: Path) -> None:
     print("\nDataset split complete! ✨")
     print(f"Train set created at: {train_set}")
     print(f"Test set created at: {test_set}")
+    return train_set, test_set

@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from utils import __all__
+from utils import parse_dir, parse_file, process_dir, process_file
 
 
 def main():
@@ -17,11 +17,11 @@ def main():
         return
     try:
         if input_path.is_file():
-            __all__.parse_file(input_path)
-            __all__.process_file(input_path)
+            parse_file(input_path)
+            process_file(input_path)
         elif input_path.is_dir():
-            new_path = __all__.parse_dir(input_path)
-            __all__.process_dir(new_path)
+            new_path = parse_dir(input_path)
+            process_dir(new_path)
     except FileNotFoundError:
         print(f"Error: The file '{input_path}' was not found.")
     except Exception as e:

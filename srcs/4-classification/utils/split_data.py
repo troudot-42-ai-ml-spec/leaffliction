@@ -41,12 +41,12 @@ def split_data(dataset_path: str) -> Path:
         for filename in train_files:
             source_file = current_dir / filename
             dest_file = train_set_dir / filename
-            shutil.move(source_file, dest_file)
+            shutil.copy(source_file, dest_file)
 
         for filename in test_files:
             source_file = current_dir / filename
             dest_file = test_set_dir / filename
-            shutil.move(source_file, dest_file)
+            shutil.copy(source_file, dest_file)
 
     print("\nDataset split complete! ✨")
     print(f"Train set created at: {train_set}")

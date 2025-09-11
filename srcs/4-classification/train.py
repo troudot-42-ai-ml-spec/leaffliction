@@ -1,3 +1,4 @@
+import os
 from utils import check_dir, split_data, load_datasets, build_model
 from utils import train_model  # , plot_metrics
 import argparse
@@ -18,6 +19,9 @@ def main(args):
         print(history)  # linter for commit
         # --- Plot training metrics ---
         # plot_metrics(history)
+
+        os.makedirs("models", exist_ok=True)
+        model.save("models/leaffliction.keras", overwrite=True)
 
     except Exception as e:
         print(e)

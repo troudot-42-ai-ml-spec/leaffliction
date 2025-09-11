@@ -69,9 +69,10 @@ def process_dir(new_path: Path):
             continue
 
         print(
-            f"Balancing '{current_path.name}': \
-            Generating {num_to_generate} new images..."
+            f"⏳ Augmenting '{current_path.name}':\n\
+Generating {num_to_generate} new images..."
         )
 
         for i in range(num_to_generate):
             augment_one_image(current_path, image_paths, aug)
+    print("✅ Dataset augmentation is complete.")

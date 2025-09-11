@@ -31,26 +31,19 @@ def parse_dir(input_path: Path) -> Path:
             grouped_dirs[prefix].append(item)
         elif item.name != ".DS_Store":
             raise ValueError(
-                f"❌ Expected only subdirectories in '{input_path.name}',\
-                     but found file: '{item.name}'"
+                f"❌ Expected only subdirectories of format\
+ <Apple/Grape>_<condition> in '{input_path.name}', but found: '{item.name}'"
             )
-
     if len(grouped_dirs) < 2:
         raise ValueError(
             f"❌ Expected at least 2 groups of subdirectories \
                 (e.g., 'Apple_*', 'Grape_*'), but found {len(grouped_dirs)}."
         )
-
-    print("✅ Directory structure is valid. Organizing...")
-
+    print("✅ Directory structure is valid.")
+    print(f"⏳ Copying folders to '{augmented_dir.name}'...")
     for prefix, dir_list in grouped_dirs.items():
-        destination_folder = augmented_dir / prefix
-        destination_folder.mkdir(exist_ok=True)
-
-        print(f"\nProcessing group '{prefix}':")
         for source_dir in dir_list:
-            destination = destination_folder / source_dir.name
+            destination = augmented_dir / source_dir.name
             shutil.copytree(source_dir, destination, dirs_exist_ok=True)
-            print(f"  -> Copied '{source_dir.name}' to '{destination_folder.name}'")
 
     return augmented_dir

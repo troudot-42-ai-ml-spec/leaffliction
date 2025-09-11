@@ -8,6 +8,7 @@ def load_datasets(train_set: Path, test_set: Path):
         Takes the train set to split it into training and validation sets.
         Turns train, validation and test sets as tf.data.Dataset.
     """
+    print("⏳ Loading dataset for training...")
     train_dataset = tf.keras.utils.image_dataset_from_directory(
         train_set,
         labels='inferred',
@@ -18,6 +19,7 @@ def load_datasets(train_set: Path, test_set: Path):
         subset='training',
         seed=123
     )
+    print("⏳ Loading dataset for validation...")
     validation_dataset = tf.keras.utils.image_dataset_from_directory(
         train_set,
         labels='inferred',
@@ -28,6 +30,7 @@ def load_datasets(train_set: Path, test_set: Path):
         subset='validation',
         seed=123
     )
+    print("⏳ Loading dataset for testing...")
     test_dataset = tf.keras.utils.image_dataset_from_directory(
         test_set,
         labels='inferred',
@@ -36,11 +39,12 @@ def load_datasets(train_set: Path, test_set: Path):
         batch_size=BATCH_SIZE,
         shuffle=False
     )
-
-    # --- Setup caching for performance ---
+    print("✅ Data loading complete.")
+    print("⏳ Caching datasets for performance...")
     AUTOTUNE = tf.data.AUTOTUNE
     train_dataset = train_dataset.cache().prefetch(buffer_size=AUTOTUNE)
     validation_dataset = validation_dataset.cache().prefetch(buffer_size=AUTOTUNE)
     test_dataset = test_dataset.cache().prefetch(buffer_size=AUTOTUNE)
+    print("✅ Done.\n")
 
     return train_dataset, validation_dataset, test_dataset

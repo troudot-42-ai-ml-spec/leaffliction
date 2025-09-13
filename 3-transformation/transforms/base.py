@@ -1,4 +1,4 @@
-from typing import Protocol, Dict, Type, Any
+from typing import Protocol, Dict, Any
 import numpy as np
 
 

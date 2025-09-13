@@ -9,7 +9,7 @@ Array = np.ndarray
 def show_grid(
     images: List[Array],
     titles: Optional[List[str]] = None,
-    max_cols: int = 3,
+    max_cols: int = 5,
     dpi: int = 120,
 ):
     """

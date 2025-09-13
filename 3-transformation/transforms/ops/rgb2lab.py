@@ -1,6 +1,6 @@
 import numpy as np
 from plantcv import plantcv as pcv
-from typing import Dict, Any, Literal
+from typing import Dict, Any
 from ..registry import register
 
 

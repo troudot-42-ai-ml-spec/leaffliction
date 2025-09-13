@@ -1,6 +1,6 @@
 import numpy as np
 from plantcv import plantcv as pcv
-from typing import Dict, Any, Literal
+from typing import Dict, Any
 from ..registry import register
 
 
@@ -14,6 +14,6 @@ class FillHoles:
         if "mask" not in ctx:
             raise Exception("Otsu has to be called before FillHoles!")
         otsu: Dict[str, np.ndarray] = ctx["mask"]
-        for channel, img in otsu.items():
-            ctx["mask"][channel] = pcv.fill_holes(img)
+        for channel, _img in otsu.items():
+            ctx["mask"][channel] = pcv.fill_holes(_img)
         return img

@@ -18,4 +18,4 @@ def build(name: str, **kwargs) -> Transformation:
 
 
 def available_ops() -> List[str]:
-    return sorted(_REGISTRY.keys())
+    return list(_REGISTRY.keys())

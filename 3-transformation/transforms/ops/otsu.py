@@ -1,6 +1,6 @@
 import numpy as np
 from plantcv import plantcv as pcv
-from typing import Dict, Any, Literal
+from typing import Dict, Any
 from ..registry import register
 
 
@@ -15,7 +15,7 @@ class Otsu:
             raise Exception("Rgb2Lab has to be called before Otsu!")
         lab: Dict[str, np.ndarray] = ctx["lab"]
         ctx["mask"] = {}
-        for channel, img in lab.items():
+        for channel, _img in lab.items():
             type = "light" if channel == "b" else "dark"
-            ctx["mask"][channel] = pcv.threshold.otsu(img, type)
+            ctx["mask"][channel] = pcv.threshold.otsu(_img, type)
         return img

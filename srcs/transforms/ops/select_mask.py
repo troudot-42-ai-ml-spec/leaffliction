@@ -3,10 +3,7 @@ from typing import Dict
 from ..registry import register
 
 
-WEIGHTS: Dict[str, float] = {
-    "compactness": 1,
-    "smoothness": 0.8
-}
+WEIGHTS: Dict[str, float] = {"compactness": 1, "smoothness": 0.8}
 
 
 def calculate_compactness(area: float, perimeter: float) -> float:
@@ -36,8 +33,9 @@ class SelectMask:
             compactness: float = calculate_compactness(area, perimeter)
             smoothness: float = calculate_smoothness(area, perimeter)
 
-            score: float = (compactness * WEIGHTS['compactness']) \
-                + (smoothness * WEIGHTS['smoothness'])
+            score: float = (compactness * WEIGHTS["compactness"]) + (
+                smoothness * WEIGHTS["smoothness"]
+            )
             scores[channel] = score
 
         if not scores:

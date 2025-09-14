@@ -1,5 +1,5 @@
-import numpy as np
 from pathlib import Path
+import numpy as np
 from argparse import Namespace
 from srcs.transforms.base import Transformation
 from srcs.transforms.registry import build, available_ops
@@ -37,6 +37,8 @@ def pipeline(
             imgs: List[np.ndarray] = []
             labels: List[str] = []
             for op in ctx:
+                if type(ctx[op]) is not dict:
+                    continue
                 for ch, img in ctx[op].items():
                     if type(img) is not np.ndarray:
                         continue

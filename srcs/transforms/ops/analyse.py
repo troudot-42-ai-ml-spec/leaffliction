@@ -31,14 +31,29 @@ class Analyse:
                 current_obs_key = list(obs.keys())[-1]
                 area_val = obs[current_obs_key]["area"]["value"]
                 perimeter_val = obs[current_obs_key]["perimeter"]["value"]
+                width_val = obs[current_obs_key]["width"]["value"]
+                height_val = obs[current_obs_key]["height"]["value"]
+                centroid_x = obs[current_obs_key]["center_of_mass"]["value"][0]
+                centroid_y = obs[current_obs_key]["center_of_mass"]["value"][1]
 
                 ctx["analyse_results"][channel] = {
                     "area": area_val,
                     "perimeter": perimeter_val,
+                    "width": width_val,
+                    "height": height_val,
+                    "centroid_x": centroid_x,
+                    "centroid_y": centroid_y,
                 }
             else:
                 print(f"Warning: No observations found for channel {channel}")
-                ctx["analyse_results"][channel] = {"area": 0, "perimeter": 0}
+                ctx["analyse_results"][channel] = {
+                    "area": 0,
+                    "perimeter": 0,
+                    "width": 0,
+                    "height": 0,
+                    "centroid_x": 0,
+                    "centroid_y": 0,
+                }
 
             ctx["analyse"][channel] = analysis_result
         return img

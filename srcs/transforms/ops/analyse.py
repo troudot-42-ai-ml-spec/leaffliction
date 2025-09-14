@@ -17,7 +17,28 @@ class Analyse:
         pcv.params.sample_label = "leaf"
         ctx["analyse"] = {}
         ctx["analyse_value"] = {}
+        ctx["analyse_results"] = {}  # Store results directly in context
+
         for i, (channel, mask) in enumerate(masks.items(), start=1):
-            ctx["analyse_value"][channel] = f"{pcv.params.sample_label}_{i}"
-            ctx["analyse"][channel] = pcv.analyze.size(img, mask, n_labels=i)
+            label = f"{pcv.params.sample_label}_{i}"
+            ctx["analyse_value"][channel] = label
+
+            analysis_result = pcv.analyze.size(img, mask, n_labels=1)
+
+            obs = pcv.outputs.observations
+
+            if obs:
+                current_obs_key = list(obs.keys())[-1]
+                area_val = obs[current_obs_key]["area"]["value"]
+                perimeter_val = obs[current_obs_key]["perimeter"]["value"]
+
+                ctx["analyse_results"][channel] = {
+                    "area": area_val,
+                    "perimeter": perimeter_val,
+                }
+            else:
+                print(f"Warning: No observations found for channel {channel}")
+                ctx["analyse_results"][channel] = {"area": 0, "perimeter": 0}
+
+            ctx["analyse"][channel] = analysis_result
         return img

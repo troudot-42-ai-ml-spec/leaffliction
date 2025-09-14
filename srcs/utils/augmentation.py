@@ -79,11 +79,12 @@ def create_augmented_generator(
 
     # Augment each class to match the max count
     for class_label, count in class_counts.items():
+        class_name = dataset.class_names[class_label]
         num_to_generate = max_count - count
         if num_to_generate <= 0:
+            print(f"✅ Class {class_name:<15} is already balanced.")
             continue
 
-        class_name = dataset.class_names[class_label]
         print(
             f"⏳ Augmenting class {class_name:<15} - "
             f"Generating {num_to_generate:<4} new images..."
@@ -114,11 +115,9 @@ def augment_dataset(dataset: tf.data.Dataset) -> tf.data.Dataset:
         Augmented tf.data.Dataset
     """
 
-    def generator():
-        return create_augmented_generator(dataset)
-
     augmented_dataset = tf.data.Dataset.from_generator(
-        generator, output_signature=dataset.element_spec
+        lambda: create_augmented_generator(dataset),
+        output_signature=dataset.element_spec
     )
     augmented_dataset.class_names = dataset.class_names
 

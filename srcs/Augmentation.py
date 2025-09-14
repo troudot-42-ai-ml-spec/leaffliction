@@ -1,32 +1,74 @@
+from typing import List, Tuple
+import math
 import argparse
-from pathlib import Path
-from utils.processing.process import process_dir, process_file
-from utils.parsing.parse import parse_dir, parse_file
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+from utils.augmentation import augment_image
 
 
-def main():
+def display_augmented_image(
+    image: np.ndarray, augmented_images: List[Tuple[str, np.ndarray]]
+) -> None:
+    """
+    Display original image alongside all augmented versions.
+
+    Args:
+        image: Original image
+        augmented_images: List of (name, augmented_image) tuples
+    """
+
+    IMAGE_FIGSIZE = (3, 3)
+    IMAGE_COLS = 4
+
+    total_images = len(augmented_images) + 1
+    rows = math.ceil(total_images / IMAGE_COLS)
+
+    _, axes = plt.subplots(
+        rows,
+        IMAGE_COLS,
+        figsize=(IMAGE_FIGSIZE[0] * IMAGE_COLS, IMAGE_FIGSIZE[1] * rows),
+    )
+    axes = axes.flatten() if rows > 1 else [axes] if IMAGE_COLS == 1 else axes
+
+    axes[0].imshow(image.astype(np.uint8))
+    axes[0].set_title("Original Image", fontsize=12, fontweight="bold")
+    axes[0].axis("off")
+
+    for i, (name, aug_image) in enumerate(augmented_images, 1):
+        if i < len(axes):
+            axes[i].imshow(aug_image.astype(np.uint8))
+            axes[i].set_title(f"{name}", fontsize=12)
+            axes[i].axis("off")
+
+    for i in range(total_images, len(axes)):
+        axes[i].axis("off")
+
+    plt.suptitle("Image Augmentation Results", fontsize=16, fontweight="bold")
+    plt.tight_layout()
+    plt.show()
+
+
+def main() -> None:
+    """
+    Main function to parse arguments and display augmented images.
+    """
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "input_path",
-        help="The path to the image you are trying to augment,\
-             or directory you are trying to balance.",
+        "image_path", help="The path to the image you are trying to augment"
     )
     args = parser.parse_args()
-    input_path = Path(args.input_path)
-    if not input_path.exists():
-        print(f"Error: The path '{input_path}' does not exist.")
-        return
+
     try:
-        if input_path.is_file():
-            parse_file(input_path)
-            process_file(input_path)
-        elif input_path.is_dir():
-            new_path = parse_dir(input_path)
-            process_dir(new_path)
-    except FileNotFoundError:
-        print(f"Error: The file '{input_path}' was not found.")
+        image = tf.keras.utils.load_img(args.image_path, target_size=(256, 256))
+        image_array = tf.keras.utils.img_to_array(image).astype(np.uint8)
+
+        augmented_images = augment_image(image_array)
+        display_augmented_image(image_array, augmented_images)
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"An error occurred: {e}")
+        return
 
 
 if __name__ == "__main__":

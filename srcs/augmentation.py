@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
-from utils import parse_dir, parse_file, process_dir, process_file
+from utils.processing.process import process_dir, process_file
+from utils.parsing.parse import parse_dir, parse_file
 
 
 def main():

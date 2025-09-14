@@ -13,8 +13,10 @@ def check_dir(input_path: str) -> None:
         if depth > max_depth:
             max_depth = depth
         if max_depth > 2:
-            raise Exception(f"❌ Directory {input_path} is not formated correctly:\n\
-Needs only one layer of subdirectories containing images.")
+            raise Exception(
+                f"❌ Directory {input_path} is not formated correctly:\n\
+Needs only one layer of subdirectories containing images."
+            )
         for file in files:
             file_path = root / file
             if file_path.suffix != ".JPG":
@@ -24,8 +26,12 @@ Needs only one layer of subdirectories containing images.")
             if "_" in subdir_path.name:
                 prefix = subdir_path.name.split("_")[0]
                 if prefix not in subdir_cats:
-                    raise Exception(f"❌ Subdir {subdir} doesn't respect the naming\
- convention:\nPrefix neither Apple nor Grape.")
+                    raise Exception(
+                        f"❌ Subdir {subdir} doesn't respect the naming\
+ convention:\nPrefix neither Apple nor Grape."
+                    )
             else:
-                raise Exception(f"❌ Subdir {subdir} doesn't respect the naming\
- convention:\nNeeds <Apple/Grape>_<condition>.")
+                raise Exception(
+                    f"❌ Subdir {subdir} doesn't respect the naming\
+ convention:\nNeeds <Apple/Grape>_<condition>."
+                )

@@ -1,6 +1,6 @@
 import argparse
 from typing import Literal
-from transforms.registry import available_ops
+from ...transforms.registry import available_ops
 
 SrcType = Literal["multi", "single"]
 

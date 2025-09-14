@@ -1,10 +1,16 @@
 import os
-from utils import check_dir, split_data, load_datasets, build_model
-from utils import train_model  # , plot_metrics
 import argparse
 
 
 def main(args):
+    from srcs.utils import (
+        check_dir,
+        split_data,
+        load_datasets,
+        build_model,
+        train_model,
+    )
+
     try:
         # --- Check directory validity ---
         check_dir(args.input_path)
@@ -32,7 +38,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "input_path",
         type=str,
-        help="Path to the fully augmented and transformed dataset."
-        )
+        help="Path to the fully augmented and transformed dataset.",
+    )
     args = parser.parse_args()
     main(args)

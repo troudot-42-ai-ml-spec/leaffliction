@@ -1,11 +1,11 @@
 import numpy as np
 from pathlib import Path
 from argparse import Namespace
-from transforms.base import Transformation
-from transforms.registry import build, available_ops
+from srcs.transforms.base import Transformation
+from srcs.transforms.registry import build, available_ops
 from typing import List, Optional, Dict, Any
 from plantcv import plantcv as pcv
-from viz.plotting import show_grid
+from srcs.utils.plotting.grid import show_grid
 
 _OPS: List[Transformation] = []
 

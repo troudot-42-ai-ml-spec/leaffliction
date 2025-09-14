@@ -6,7 +6,7 @@ from pathlib import Path
 
 def split_data(dataset_path: str) -> Path:
     """
-        Split dataset into a training set and a test set.
+    Split dataset into a training set and a test set.
     """
     input_path = Path(dataset_path)
     test_set = input_path.parent / "test_set"

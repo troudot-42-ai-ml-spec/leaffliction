@@ -26,9 +26,7 @@ def main(args: argparse.Namespace) -> None:
     print("Predictions (sorted by confidence):")
     for i, idx in enumerate(indices, 1):
 
-        print(
-            f"{i}. {CLASS_LABELS[idx]}: {prediction[0][idx] * 100:.2f}%"
-        )
+        print(f"{i}. {CLASS_LABELS[idx]}: {prediction[0][idx] * 100:.2f}%")
 
 
 if __name__ == "__main__":

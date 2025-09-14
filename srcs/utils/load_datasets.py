@@ -5,39 +5,39 @@ from pathlib import Path
 
 def load_datasets(train_set: Path, test_set: Path):
     """
-        Takes the train set to split it into training and validation sets.
-        Turns train, validation and test sets as tf.data.Dataset.
+    Takes the train set to split it into training and validation sets.
+    Turns train, validation and test sets as tf.data.Dataset.
     """
     print("⏳ Loading dataset for training...")
     train_dataset = tf.keras.utils.image_dataset_from_directory(
         train_set,
-        labels='inferred',
-        label_mode='int',
+        labels="inferred",
+        label_mode="int",
         image_size=(IMG_HEIGHT, IMG_WIDTH),
         batch_size=BATCH_SIZE,
         validation_split=0.2,
-        subset='training',
-        seed=123
+        subset="training",
+        seed=123,
     )
     print("⏳ Loading dataset for validation...")
     validation_dataset = tf.keras.utils.image_dataset_from_directory(
         train_set,
-        labels='inferred',
-        label_mode='int',
+        labels="inferred",
+        label_mode="int",
         image_size=(IMG_HEIGHT, IMG_WIDTH),
         batch_size=BATCH_SIZE,
         validation_split=0.2,
-        subset='validation',
-        seed=123
+        subset="validation",
+        seed=123,
     )
     print("⏳ Loading dataset for testing...")
     test_dataset = tf.keras.utils.image_dataset_from_directory(
         test_set,
-        labels='inferred',
-        label_mode='int',
+        labels="inferred",
+        label_mode="int",
         image_size=(IMG_HEIGHT, IMG_WIDTH),
         batch_size=BATCH_SIZE,
-        shuffle=False
+        shuffle=False,
     )
     print("✅ Data loading complete.")
     print("⏳ Caching datasets for performance...")

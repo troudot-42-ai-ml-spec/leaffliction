@@ -1,9 +1,9 @@
 from argparse import Namespace
 from pathlib import Path
 from typing import List
-from pipeline.pipeline import pipeline, build_ops
-from parsing.args import parse_args, check_args, SrcType
-from parsing.parse import get_all_images_path, find_dir_path
+from srcs.pipeline.transforms_pipeline import pipeline, build_ops
+from srcs.utils.parsing.args import parse_args, check_args, SrcType
+from srcs.utils.parsing.get_all_images_path import get_all_images_path, find_dir_path
 
 if __name__ == "__main__":
     args: Namespace = parse_args()
@@ -17,12 +17,13 @@ if __name__ == "__main__":
             dst_path: Path = find_dir_path(args.dst)
         except Exception:
             Path.mkdir(args.dst)
-            dst_path: Path = Path(args.dst)
+            dst_path = Path(args.dst)
         pipeline(paths, args=args, dst=dst_path)
     else:
-        path: Path = Path(args.path)
+        path: Path
+        path = Path(args.path)
         if path.exists():
-            paths: List[Path] = [path]
+            paths = [path]
             pipeline(paths, args=args)
         else:
             raise Exception("Image path have to exists.")

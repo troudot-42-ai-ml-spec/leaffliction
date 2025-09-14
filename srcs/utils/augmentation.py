@@ -124,27 +124,3 @@ def augment_dataset(dataset: tf.data.Dataset) -> tf.data.Dataset:
 
     print("✅ Dataset augmentation setup complete.")
     return augmented_dataset
-
-
-def main():
-    print("⏳ Loading original dataset...")
-    dataset = tf.keras.utils.image_dataset_from_directory(
-        directory="./data",
-        labels="inferred",
-        label_mode="int",
-        image_size=(256, 256),
-        batch_size=None,
-    )
-    print("✅ Original dataset loaded.")
-
-    augmented_dataset = augment_dataset(dataset)
-
-    print("⏳ Saving augmented dataset...")
-
-    tf.data.Dataset.save(augmented_dataset, "./augmented_dataset")
-
-    print("✅ Augmented dataset saved.")
-
-
-if __name__ == "__main__":
-    main()

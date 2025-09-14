@@ -3,8 +3,15 @@ from typing import Dict
 from ..registry import register
 
 
+WEIGHTS: Dict[str, float] = {"compactness": 1, "smoothness": 0.8}
+
+
 def calculate_compactness(area: float, perimeter: float) -> float:
     return (4 * np.pi * area) / (perimeter**2 + 1e-6)
+
+
+def calculate_smoothness(area: float, perimeter: float) -> float:
+    return area / (perimeter + 1e-6)
 
 
 @register("select_mask")
@@ -14,18 +21,26 @@ class SelectMask:
     def __init__(self): ...
 
     def apply(self, img, ctx):
-        if "analyse" not in ctx or "analyse_value" not in ctx:
+        if "analyse" not in ctx or "analyse_results" not in ctx:
             raise Exception("Analyse has to be called before SelectMask!")
-        analyse_values: Dict[str, str] = ctx["analyse_value"]
+        analyse_results: Dict[str, Dict[str, float]] = ctx["analyse_results"]
         ctx["selected_mask"] = {}
-        for channel, val in analyse_values.items():
-            # TODO: fix that only one analysed img is stored in pcv.obs\
-            # TODO:     instead of a dict of analysed img
-            break
-            # area: float = obs[val]["area"]["value"]
-            # perimeter: float = obs[val]["perimeter"]["value"]
-            # compactness: float = calculate_compactness(area, perimeter)
-            # compatness_values[channel] = compactness
+        scores: Dict[str, float] = {}
 
-        # ctx["selected_mask"][channel] = np.ones([1, 1, 3])
+        for channel, results in analyse_results.items():
+            area: float = results["area"]
+            perimeter: float = results["perimeter"]
+            compactness: float = calculate_compactness(area, perimeter)
+            smoothness: float = calculate_smoothness(area, perimeter)
+
+            score: float = (compactness * WEIGHTS["compactness"]) + (
+                smoothness * WEIGHTS["smoothness"]
+            )
+            scores[channel] = score
+
+        if not scores:
+            raise Exception("No valid masks found after analysis!")
+
+        best_channel = max(scores, key=scores.get)
+        ctx["selected_mask"] = best_channel
         return img

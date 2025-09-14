@@ -6,4 +6,5 @@ from . import (
     analyse,
     select_mask,
     veins,
+    crop,
 )

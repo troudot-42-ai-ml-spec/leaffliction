@@ -25,6 +25,8 @@ def parse_args() -> argparse.Namespace:
             "otsu",
             "fill_holes",
             "analyse",
+            "select_mask",
+            "crop",
             "veins",
         ],
         help=f"Comma-separated list of ops. Available: {', '.join(available_ops())}",

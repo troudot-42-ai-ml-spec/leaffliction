@@ -3,7 +3,10 @@ from argparse import Namespace
 from typing import List, Dict
 import attrs
 
-from config import Config
+
+@attrs.define(frozen=True, slots=True)
+class Config:
+    types: List[str] = attrs.field(default=["Grape", "Apple"])
 
 
 @attrs.define(slots=True)

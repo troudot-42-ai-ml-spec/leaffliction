@@ -3,8 +3,7 @@ import argparse
 
 from typing import List
 
-from config import Config
-from utils.parse import parse, Type
+from utils.parsing import parse, Type, Config
 
 
 def plot_types(types: List[Type]) -> None:

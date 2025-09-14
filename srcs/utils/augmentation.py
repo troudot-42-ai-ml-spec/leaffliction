@@ -22,8 +22,8 @@ def augmentations() -> Dict[str, A.BasicTransform]:
         "Shear": A.Affine(shear={"x": (-25, 25)}, p=1.0),
         "Crop": A.Compose(
             [
-                A.CenterCrop(height=200, width=200, p=1.0),
-                A.Resize(height=256, width=256, p=1.0),
+                A.CenterCrop(height=100, width=100, p=1.0),
+                A.Resize(height=128, width=128, p=1.0),
             ]
         ),  # To maintain consistent image size
         "Distortion": A.Perspective(scale=(0.05, 0.1), p=1.0),
@@ -120,6 +120,4 @@ def augment_dataset(dataset: tf.data.Dataset) -> tf.data.Dataset:
         output_signature=dataset.element_spec
     )
     augmented_dataset.class_names = dataset.class_names
-
-    print("✅ Dataset augmentation setup complete.")
     return augmented_dataset

@@ -53,6 +53,9 @@ def main() -> None:
     """
     Main function to parse arguments and display augmented images.
     """
+    # https://github.com/tensorflow/tensorflow/issues/68593
+    import os
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
     parser = argparse.ArgumentParser()
     parser.add_argument(

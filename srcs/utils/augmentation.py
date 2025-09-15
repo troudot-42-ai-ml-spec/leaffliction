@@ -4,6 +4,7 @@ import albumentations as A
 import cv2
 import numpy as np
 import random
+from .hyperparams import IMG_HEIGHT, IMG_WIDTH
 
 
 def augmentations() -> Dict[str, A.BasicTransform]:
@@ -11,22 +12,37 @@ def augmentations() -> Dict[str, A.BasicTransform]:
     Returns a dictionary of specific, named augmentations.
     """
     return {
-        "Flip": A.HorizontalFlip(p=1.0),
-        "Rotate": A.Rotate(limit=45, p=1.0, border_mode=cv2.BORDER_CONSTANT),
-        "Skew": A.Affine(
-            scale=(0.9, 1.1),
-            rotate=(-15, 15),
-            translate_percent={"x": (-0.1, 0.1)},
-            p=1.0,
+        "Flip": A.HorizontalFlip(p=0.5),
+        "Rotate": A.Affine(
+            rotate=(-30, 30),
+            p=0.5,
+            border_mode=cv2.BORDER_REFLECT_101
         ),
-        "Shear": A.Affine(shear={"x": (-25, 25)}, p=1.0),
+        "Skew": A.Affine(
+            scale=(0.92, 1.08),
+            rotate=(-10, 10),
+            translate_percent={"x": (-0.1, 0.1)},
+            p=0.5,
+            border_mode=cv2.BORDER_REFLECT_101
+        ),
+        "Shear": A.Affine(
+            shear={"x": (-20, 20)},
+            p=0.4,
+            border_mode=cv2.BORDER_REFLECT_101
+        ),
         "Crop": A.Compose(
             [
-                A.CenterCrop(height=100, width=100, p=1.0),
-                A.Resize(height=128, width=128, p=1.0),
-            ]
-        ),  # To maintain consistent image size
-        "Distortion": A.Perspective(scale=(0.05, 0.1), p=1.0),
+                A.CenterCrop(height=115, width=115, p=1.0),
+                # To maintain consistent image size after cropping
+                A.Resize(height=IMG_HEIGHT, width=IMG_WIDTH, p=1.0),
+            ],
+            p=0.5
+        ),
+        "Distortion": A.Perspective(
+            scale=(0.05, 0.1),
+            p=0.3,
+            border_mode=cv2.BORDER_REFLECT_101
+        ),
     }
 
 

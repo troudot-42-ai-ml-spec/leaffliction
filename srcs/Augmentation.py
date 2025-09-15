@@ -5,6 +5,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.augmentation import augment_image
+from utils.hyperparams import IMG_HEIGHT, IMG_WIDTH
 
 
 def display_augmented_image(
@@ -64,7 +65,10 @@ def main() -> None:
     args = parser.parse_args()
 
     try:
-        image = tf.keras.utils.load_img(args.image_path, target_size=(256, 256))
+        image = tf.keras.utils.load_img(
+            args.image_path,
+            target_size=(IMG_HEIGHT, IMG_WIDTH)
+        )
         image_array = tf.keras.utils.img_to_array(image).astype(np.uint8)
 
         augmented_images = augment_image(image_array)

@@ -134,6 +134,16 @@ def augment_dataset(dataset: tf.data.Dataset) -> tf.data.Dataset:
     augmented_dataset = tf.data.Dataset.from_generator(
         lambda: create_augmented_generator(dataset),
         output_signature=dataset.element_spec
+    ).cache()
+
+    # Force evaluation to apply augmentations immediately (and apply cardinality)
+    cardinality = 0
+    for _ in augmented_dataset:
+        cardinality += 1
+
+    augmented_dataset = augmented_dataset.apply(
+        tf.data.experimental.assert_cardinality(cardinality)
     )
+
     augmented_dataset.class_names = dataset.class_names
     return augmented_dataset

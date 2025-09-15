@@ -1,4 +1,5 @@
 from typing import List, Dict, Tuple, Generator
+import os
 import tensorflow as tf
 import albumentations as A
 import cv2
@@ -131,14 +132,15 @@ def augment_dataset(dataset: tf.data.Dataset) -> tf.data.Dataset:
         Augmented tf.data.Dataset
     """
 
+    os.makedirs(".tf-cache/augmentation", exist_ok=True)
     augmented_dataset = tf.data.Dataset.from_generator(
         lambda: create_augmented_generator(dataset),
         output_signature=dataset.element_spec
-    ).cache()
+    ).cache(filename=".tf-cache/augmentation/")
 
     # Force evaluation to apply augmentations immediately (and apply cardinality)
     cardinality = 0
-    for _ in augmented_dataset:
+    for _ in augmented_dataset.as_numpy_iterator():
         cardinality += 1
 
     augmented_dataset = augmented_dataset.apply(

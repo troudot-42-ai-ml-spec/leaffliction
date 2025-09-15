@@ -12,7 +12,7 @@ def main() -> None:
     """
     # https://github.com/tensorflow/tensorflow/issues/68593
     import os
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -50,15 +50,26 @@ def main() -> None:
             10_000, reshuffle_each_iteration=True
         )
 
-        # Disable cache for the training set to avoid overfitting on augmented data
         train_dataset = train_dataset.batch(BATCH_SIZE)     \
             .prefetch(tf.data.AUTOTUNE)
-        validation_dataset = validation_dataset.cache()     \
+
+        os.makedirs(".tf-cache/validation", exist_ok=True)
+        validation_dataset = validation_dataset             \
+            .cache(filename=".tf-cache/validation/")        \
             .batch(BATCH_SIZE)                              \
             .prefetch(tf.data.AUTOTUNE)
-        test_dataset = test_dataset.cache()                 \
+
+        os.makedirs(".tf-cache/test", exist_ok=True)
+        test_dataset = test_dataset                         \
+            .cache(filename=".tf-cache/test/")              \
             .batch(BATCH_SIZE)                              \
             .prefetch(tf.data.AUTOTUNE)
+
+        # Force evaluation to fill the cache
+        for _ in validation_dataset.as_numpy_iterator():
+            pass
+        for _ in test_dataset.as_numpy_iterator():
+            pass
 
         model = build_model()
         train_model(

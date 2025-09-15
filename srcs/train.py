@@ -32,13 +32,6 @@ def main() -> None:
         print("✅ Original dataset loaded.")
         class_names = dataset.class_names
 
-        # ! The whole dataset should NOT be augmented, only the training set.
-        # ! If only the training set is augmented, the accuracy plummets
-        # ! from ~95% to ~10%. It seems that the model overfits the augmented data
-        # ! and fails to generalize to the original data.
-        # * Comment the line below to disable dataset augmentation.
-        dataset = augment_dataset(dataset)
-
         # Split into train (70%), val (20%), test (10%)
         print("⏳ Splitting dataset...")
         train_dataset, remaining_dataset = tf.keras.utils.split_dataset(
@@ -52,12 +45,13 @@ def main() -> None:
         validation_dataset.class_names = class_names
         test_dataset.class_names = class_names
 
-        # * Uncomment the line below to augment the training set.
-        # train_dataset = augment_dataset(train_dataset)
-        # TODO: Force train_dataset evaluation
+        train_dataset = augment_dataset(train_dataset)
+        train_dataset = train_dataset.shuffle(
+            10_000, reshuffle_each_iteration=True
+        )
 
-        train_dataset = train_dataset.cache()               \
-            .batch(BATCH_SIZE)                              \
+        # Disable cache for the training set to avoid overfitting on augmented data
+        train_dataset = train_dataset.batch(BATCH_SIZE)     \
             .prefetch(tf.data.AUTOTUNE)
         validation_dataset = validation_dataset.cache()     \
             .batch(BATCH_SIZE)                              \

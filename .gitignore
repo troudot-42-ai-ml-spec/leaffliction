@@ -168,6 +168,9 @@ logs/
 tensorboard_logs/
 wandb/
 
+# Cache for datasets
+.tf-cache/
+
 # Data directories
 data/
 dataset/

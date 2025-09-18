@@ -5,7 +5,6 @@ from utils.hyperparams import IMG_HEIGHT, IMG_WIDTH, BATCH_SIZE
 from utils.build_model import build_model
 from utils.train_model import train_model
 from utils.parsing.model import save_to_zip
-import traceback
 
 
 def main() -> None:
@@ -90,7 +89,6 @@ def main() -> None:
         print(
             f"An error occurred: {e}",
         )
-        print(traceback.format_exc())
         return
 
 

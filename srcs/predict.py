@@ -4,8 +4,6 @@ import tensorflow as tf
 from utils.parsing.model import load_model_from_zip
 from utils.hyperparams import IMG_HEIGHT, IMG_WIDTH
 
-MODEL_PATH = "models/leaffliction.keras"
-
 
 def main() -> None:
     """

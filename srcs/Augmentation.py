@@ -56,7 +56,8 @@ def main() -> None:
     """
     # https://github.com/tensorflow/tensorflow/issues/68593
     import os
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -66,8 +67,7 @@ def main() -> None:
 
     try:
         image = tf.keras.utils.load_img(
-            args.image_path,
-            target_size=(IMG_HEIGHT, IMG_WIDTH)
+            args.image_path, target_size=(IMG_HEIGHT, IMG_WIDTH)
         )
         image_array = tf.keras.utils.img_to_array(image).astype(np.uint8)
 

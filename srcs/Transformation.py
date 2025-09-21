@@ -1,9 +1,9 @@
 from argparse import Namespace
 from pathlib import Path
 from typing import List
-from srcs.pipeline.transforms_pipeline import pipeline, build_ops
-from srcs.utils.parsing.args import parse_args, check_args, SrcType
-from srcs.utils.parsing.get_all_images_path import get_all_images_path, find_dir_path
+from pipeline.transforms_pipeline import pipeline, build_ops
+from utils.parsing.args import parse_args, check_args, SrcType
+from utils.parsing.get_all_images_path import get_all_images_path, find_dir_path
 
 if __name__ == "__main__":
     args: Namespace = parse_args()

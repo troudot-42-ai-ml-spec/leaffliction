@@ -1,6 +1,6 @@
 import argparse
 from typing import Literal
-from ...transforms.registry import available_ops
+from transforms.registry import available_ops
 
 SrcType = Literal["multi", "single"]
 
@@ -26,7 +26,7 @@ def parse_args() -> argparse.Namespace:
             "fill_holes",
             "analyse",
             "select_mask",
-            "crop",
+            # "crop",
             "veins",
         ],
         help=f"Comma-separated list of ops. Available: {', '.join(available_ops())}",

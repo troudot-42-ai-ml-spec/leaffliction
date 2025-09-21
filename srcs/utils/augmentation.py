@@ -14,22 +14,16 @@ def augmentations() -> Dict[str, A.BasicTransform]:
     """
     return {
         "Flip": A.HorizontalFlip(p=0.5),
-        "Rotate": A.Affine(
-            rotate=(-30, 30),
-            p=0.5,
-            border_mode=cv2.BORDER_REFLECT_101
-        ),
+        "Rotate": A.Affine(rotate=(-30, 30), p=0.5, border_mode=cv2.BORDER_REFLECT_101),
         "Skew": A.Affine(
             scale=(0.92, 1.08),
             rotate=(-10, 10),
             translate_percent={"x": (-0.1, 0.1)},
             p=0.5,
-            border_mode=cv2.BORDER_REFLECT_101
+            border_mode=cv2.BORDER_REFLECT_101,
         ),
         "Shear": A.Affine(
-            shear={"x": (-20, 20)},
-            p=0.4,
-            border_mode=cv2.BORDER_REFLECT_101
+            shear={"x": (-20, 20)}, p=0.4, border_mode=cv2.BORDER_REFLECT_101
         ),
         "Crop": A.Compose(
             [
@@ -37,12 +31,10 @@ def augmentations() -> Dict[str, A.BasicTransform]:
                 # To maintain consistent image size after cropping
                 A.Resize(height=IMG_HEIGHT, width=IMG_WIDTH, p=1.0),
             ],
-            p=0.5
+            p=0.5,
         ),
         "Distortion": A.Perspective(
-            scale=(0.05, 0.1),
-            p=0.3,
-            border_mode=cv2.BORDER_REFLECT_101
+            scale=(0.05, 0.1), p=0.3, border_mode=cv2.BORDER_REFLECT_101
         ),
     }
 
@@ -135,7 +127,7 @@ def augment_dataset(dataset: tf.data.Dataset) -> tf.data.Dataset:
     os.makedirs(".tf-cache/augmentation", exist_ok=True)
     augmented_dataset = tf.data.Dataset.from_generator(
         lambda: create_augmented_generator(dataset),
-        output_signature=dataset.element_spec
+        output_signature=dataset.element_spec,
     ).cache(filename=".tf-cache/augmentation/")
 
     # Force evaluation to apply augmentations immediately (and apply cardinality)

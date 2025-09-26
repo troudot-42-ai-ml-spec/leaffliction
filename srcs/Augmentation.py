@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import math
 import argparse
 import tensorflow as tf
@@ -6,10 +6,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils.augmentation import augment_image
 from utils.hyperparams import IMG_HEIGHT, IMG_WIDTH
+import traceback
+from pathlib import Path
 
 
 def display_augmented_image(
-    image: np.ndarray, augmented_images: List[Tuple[str, np.ndarray]]
+    images: List[Tuple[np.ndarray, Optional[str]]]
 ) -> None:
     """
     Display original image alongside all augmented versions.
@@ -22,7 +24,7 @@ def display_augmented_image(
     IMAGE_FIGSIZE = (3, 3)
     IMAGE_COLS = 4
 
-    total_images = len(augmented_images) + 1
+    total_images = len(images)
     rows = math.ceil(total_images / IMAGE_COLS)
 
     _, axes = plt.subplots(
@@ -32,14 +34,11 @@ def display_augmented_image(
     )
     axes = axes.flatten() if rows > 1 else [axes] if IMAGE_COLS == 1 else axes
 
-    axes[0].imshow(image.astype(np.uint8))
-    axes[0].set_title("Original Image", fontsize=12, fontweight="bold")
-    axes[0].axis("off")
-
-    for i, (name, aug_image) in enumerate(augmented_images, 1):
+    images[0] = (images[0][0], "Original Image")
+    for i, (image, augmentation_name) in enumerate(images):
         if i < len(axes):
-            axes[i].imshow(aug_image.astype(np.uint8))
-            axes[i].set_title(f"{name}", fontsize=12)
+            axes[i].imshow(image.astype(np.uint8))
+            axes[i].set_title(f"{augmentation_name}", fontsize=12)
             axes[i].axis("off")
 
     for i in range(total_images, len(axes)):
@@ -65,16 +64,36 @@ def main() -> None:
     args = parser.parse_args()
 
     try:
+        path = Path(args.image_path)
+        if not path.exists():
+            raise FileNotFoundError("The specified path does not exist")
+
+        if path.is_dir():
+            print(f"📁 Processing directory: {path}")
+            dataset = tf.keras.utils.image_dataset_from_directory(
+                directory=str(path),
+                labels="inferred",
+                label_mode="int",
+                image_size=(IMG_HEIGHT, IMG_WIDTH),
+                batch_size=None,
+            )
+            class_names = dataset.class_names  # noqa: F841
+
+            # TODO: Augment the dataset and save it to `augmented_directory`
+            return
+
+        print(f"🖼️  Processing single image: {path}")
         image = tf.keras.utils.load_img(
-            args.image_path,
+            str(path),
             target_size=(IMG_HEIGHT, IMG_WIDTH)
         )
         image_array = tf.keras.utils.img_to_array(image).astype(np.uint8)
 
-        augmented_images = augment_image(image_array)
-        display_augmented_image(image_array, augmented_images)
+        images = augment_image(image_array)
+        display_augmented_image(images)
     except Exception as e:
         print(f"An error occurred: {e}")
+        traceback.print_exc()
         return
 
 

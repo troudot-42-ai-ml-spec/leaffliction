@@ -6,7 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils.augmentation import augment_image
 from utils.hyperparams import IMG_HEIGHT, IMG_WIDTH
-import traceback
 from pathlib import Path
 
 
@@ -119,7 +118,6 @@ def main() -> None:
         save_images(images, path)
     except Exception as e:
         print(f"An error occurred: {e}")
-        traceback.print_exc()
         return
 
 

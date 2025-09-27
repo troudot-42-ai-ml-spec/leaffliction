@@ -10,6 +10,30 @@ import traceback
 from pathlib import Path
 
 
+def save_images(
+    images: List[Tuple[np.ndarray, Optional[str]]],
+    image_path: Path,
+) -> None:
+    """
+    Save augmented images to disk.
+
+    Args:
+        images: List of (image, augmentation_name) tuples
+    """
+
+    image_name = image_path.stem
+    image_extension = image_path.suffix.lower() if image_path.suffix else '.jpg'
+
+    for image, augmentation_name in images:
+        if augmentation_name is None:
+            continue
+
+        output_filename = f"{image_name}_{augmentation_name}{image_extension}"
+
+        image = tf.keras.utils.array_to_img(image)
+        image.save(output_filename)
+
+
 def display_augmented_image(
     images: List[Tuple[np.ndarray, Optional[str]]]
 ) -> None:
@@ -34,12 +58,13 @@ def display_augmented_image(
     )
     axes = axes.flatten() if rows > 1 else [axes] if IMAGE_COLS == 1 else axes
 
-    images[0] = (images[0][0], "Original Image")
     for i, (image, augmentation_name) in enumerate(images):
-        if i < len(axes):
-            axes[i].imshow(image.astype(np.uint8))
-            axes[i].set_title(f"{augmentation_name}", fontsize=12)
-            axes[i].axis("off")
+        if augmentation_name is None:
+            augmentation_name = "Original Image"
+
+        axes[i].imshow(image.astype(np.uint8))
+        axes[i].set_title(f"{augmentation_name}", fontsize=12)
+        axes[i].axis("off")
 
     for i in range(total_images, len(axes)):
         axes[i].axis("off")
@@ -91,6 +116,7 @@ def main() -> None:
 
         images = augment_image(image_array)
         display_augmented_image(images)
+        save_images(images, path)
     except Exception as e:
         print(f"An error occurred: {e}")
         traceback.print_exc()

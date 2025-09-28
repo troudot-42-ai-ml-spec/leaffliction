@@ -94,7 +94,7 @@ def extract_variants(
     return variants
 
 
-def process_single_image(
+def process_single_image(  # noqa: C901
     img: np.ndarray,
     path: Path,
     args: Namespace,
@@ -115,6 +115,9 @@ def process_single_image(
         ctx["_images"]["original"], ctx, applied_ops, requested_ops
     )
 
+    if not variants:
+        return
+
     if args.mode == "single":
         if args.show == "all":
             show_grid(
@@ -123,12 +126,18 @@ def process_single_image(
         elif args.show == "one":
             pcv.plot_image(variants[requested_ops[-1]])
     elif args.mode == "multi":
-        for name, variant in variants.items():
-            # dst/<classe>/<variant>/...
-            save_path = args.dst / path.parent.name / name
+        # dst/<classe>/<variant>/...
+        if args.save == "all":
+            for name, variant in variants.items():
+                save_path = args.dst / path.parent.name / name
+                save_path.mkdir(parents=True, exist_ok=True)
+                save_path = save_path / f"{path.stem}{path.suffix}"
+                pcv.print_image(variant, str(save_path.absolute()))
+        elif args.save == "one":
+            save_path = args.dst / path.parent.name / requested_ops[-1]
             save_path.mkdir(parents=True, exist_ok=True)
             save_path = save_path / f"{path.stem}{path.suffix}"
-            pcv.print_image(variant, str(save_path.absolute()))
+            pcv.print_image(variants[requested_ops[-1]], str(save_path.absolute()))
 
 
 def process(

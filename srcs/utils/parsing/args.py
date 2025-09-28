@@ -3,10 +3,12 @@ from pathlib import Path
 from transforms.registry import available_ops
 
 
-def validate_src_path(s: str) -> Path:
-    path = Path(s)
+def validate_src_path(s: str, should_exist: bool = True) -> Path:
+    path = Path(s).expanduser().resolve()
     if path.exists():
-        return path.expanduser().resolve()
+        return path
+    elif not should_exist and not path.exists():
+        return path
     else:
         raise ValueError(f"Path {s} does not exist")
 
@@ -50,7 +52,7 @@ def config_multi_parser(parser: argparse.ArgumentParser) -> None:
     )
     _ = parser.add_argument(
         "-dst",
-        type=validate_src_path,
+        type=lambda path: validate_src_path(path, should_exist=False),
         required=True,
         help="Destination directory (for saving results)",
     )
@@ -60,14 +62,22 @@ def config_multi_parser(parser: argparse.ArgumentParser) -> None:
         default=[
             "gaussian_blur",
             "rgb2lab",
-            "veins",
             "otsu",
             "fill_holes",
             "analyse",
             "select_mask",
+            "remove_background",
             "crop",
+            "crop_blur",
         ],
         help=f"Comma-separated list of ops. Available: {', '.join(available_ops())}",
+    )
+    _ = parser.add_argument(
+        "--save",
+        type=str,
+        choices=["all", "one"],
+        default="one",
+        help="Choice to save all ops or just the last one",
     )
 
 

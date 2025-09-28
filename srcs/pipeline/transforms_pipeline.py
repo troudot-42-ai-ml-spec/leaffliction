@@ -129,15 +129,27 @@ def process_single_image(  # noqa: C901
         # dst/<classe>/<variant>/...
         if args.save == "all":
             for name, variant in variants.items():
-                save_path = args.dst / path.parent.name / name
+                if args.split:
+                    save_path = args.dst / path.parent.name / name
+                    save_path.mkdir(parents=True, exist_ok=True)
+                    save_path = save_path / f"{path.stem}{path.suffix}"
+                    pcv.print_image(variant, str(save_path.absolute()))
+                else:
+                    save_path = args.dst / path.parent.name
+                    save_path.mkdir(parents=True, exist_ok=True)
+                    save_path = save_path / f"{path.stem}_{name}{path.suffix}"
+                    pcv.print_image(variant, str(save_path.absolute()))
+        elif args.save == "one":
+            if args.split:
+                save_path = args.dst / path.parent.name / requested_ops[-1]
                 save_path.mkdir(parents=True, exist_ok=True)
                 save_path = save_path / f"{path.stem}{path.suffix}"
-                pcv.print_image(variant, str(save_path.absolute()))
-        elif args.save == "one":
-            save_path = args.dst / path.parent.name / requested_ops[-1]
-            save_path.mkdir(parents=True, exist_ok=True)
-            save_path = save_path / f"{path.stem}{path.suffix}"
-            pcv.print_image(variants[requested_ops[-1]], str(save_path.absolute()))
+                pcv.print_image(variants[requested_ops[-1]], str(save_path.absolute()))
+            else:
+                save_path = args.dst / path.parent.name
+                save_path.mkdir(parents=True, exist_ok=True)
+                save_path = save_path / f"{path.stem}_{requested_ops[-1]}{path.suffix}"
+                pcv.print_image(variants[requested_ops[-1]], str(save_path.absolute()))
 
 
 def process(

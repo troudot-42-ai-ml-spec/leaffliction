@@ -79,6 +79,11 @@ def config_multi_parser(parser: argparse.ArgumentParser) -> None:
         default="one",
         help="Choice to save all ops or just the last one",
     )
+    _ = parser.add_argument(
+        "--split",
+        action="store_true",
+        help="Split mode for multiple images",
+    )
 
 
 def parse_args() -> argparse.Namespace:

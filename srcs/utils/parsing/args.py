@@ -1,22 +1,62 @@
 import argparse
-from typing import Literal
-from ...transforms.registry import available_ops
-
-SrcType = Literal["multi", "single"]
+from pathlib import Path
+from transforms.registry import available_ops
 
 
-def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(
-        description="Apply leaf image transformations (Part 3)."
+def validate_src_path(s: str, should_exist: bool = True) -> Path:
+    path = Path(s).expanduser().resolve()
+    if path.exists():
+        return path
+    elif not should_exist and not path.exists():
+        return path
+    else:
+        raise ValueError(f"Path {s} does not exist")
+
+
+def config_single_parser(parser: argparse.ArgumentParser) -> None:
+    _ = parser.add_argument(
+        "-path", type=validate_src_path, required=True, help="Path to an image"
+    )
+    _ = parser.add_argument(
+        "--ops",
+        type=lambda s: s.split(","),
+        default=[
+            "gaussian_blur",
+            "rgb2lab",
+            "veins",
+            "otsu",
+            "fill_holes",
+            "analyse",
+            "select_mask",
+            "remove_background",
+            "crop",
+            "crop_blur",
+        ],
+        help=f"Comma-separated list of ops. Available: {', '.join(available_ops())}",
+    )
+    _ = parser.add_argument(
+        "--show",
+        type=str,
+        choices=["all", "one"],
+        default="all",
+        help="Choice to display all ops or just the last one",
     )
 
-    # input / output
-    p.add_argument("-path", help="Path to an image")
-    p.add_argument("-src", help="Source directory (alternative to single file)")
-    p.add_argument("-dst", help="Destination directory (for saving results)")
 
-    # ops
-    p.add_argument(
+def config_multi_parser(parser: argparse.ArgumentParser) -> None:
+    _ = parser.add_argument(
+        "-src",
+        type=validate_src_path,
+        required=True,
+        help="Source directory (for loading images)",
+    )
+    _ = parser.add_argument(
+        "-dst",
+        type=lambda path: validate_src_path(path, should_exist=False),
+        required=True,
+        help="Destination directory (for saving results)",
+    )
+    _ = parser.add_argument(
         "--ops",
         type=lambda s: s.split(","),
         default=[
@@ -26,28 +66,47 @@ def parse_args() -> argparse.Namespace:
             "fill_holes",
             "analyse",
             "select_mask",
+            "remove_background",
             "crop",
-            "veins",
+            "crop_blur",
         ],
         help=f"Comma-separated list of ops. Available: {', '.join(available_ops())}",
     )
-
-    # display / save
-    p.add_argument(
-        "--show",
-        default=False,
-        help="Display results in a grid (if input is single file)",
+    _ = parser.add_argument(
+        "--save",
+        type=str,
+        choices=["all", "one"],
+        default="one",
+        help="Choice to save all ops or just the last one",
     )
-    p.add_argument("--save", default=False, help="Save the analytics")
+    _ = parser.add_argument(
+        "--split",
+        action="store_true",
+        help="Split mode for multiple images",
+    )
 
-    return p.parse_args()
 
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(
+        description="Apply leaf image transformations (Part 3)."
+    )
+    subparsers = p.add_subparsers(
+        title="mode", description="modes", help="additional help"
+    )
+    parser_single = subparsers.add_parser("single", help="Single image mode")
+    parser_multi = subparsers.add_parser("multi", help="Multiple images mode")
 
-def check_args(args: argparse.Namespace) -> SrcType:
-    if not args.path and args.src and args.dst:
-        if args.show:
-            raise Exception("Impossible to use --show with multiple images.")
-        return "multi"
-    if args.path and not args.src and not args.dst:
-        return "single"
-    raise Exception("Invalid -path, -dst, -src handling.")
+    config_single_parser(parser_single)
+    config_multi_parser(parser_multi)
+
+    args = p.parse_args()
+
+    try:
+        if not args.path or args.path:
+            pass
+    except:  # noqa: E722
+        args.mode = "multi"
+    else:
+        args.mode = "single"
+
+    return args

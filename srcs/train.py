@@ -13,12 +13,11 @@ def main() -> None:
     """
     # https://github.com/tensorflow/tensorflow/issues/68593
     import os
+
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "dataset_path", help="The path to the dataset directory."
-    )
+    parser.add_argument("dataset_path", help="The path to the dataset directory.")
     args = parser.parse_args()
 
     try:

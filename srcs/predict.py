@@ -11,6 +11,7 @@ def main() -> None:
     """
     # https://github.com/tensorflow/tensorflow/issues/68593
     import os
+
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
     parser = argparse.ArgumentParser()
@@ -21,8 +22,7 @@ def main() -> None:
 
     try:
         image = tf.keras.utils.load_img(
-            args.image_path,
-            target_size=(IMG_HEIGHT, IMG_WIDTH)
+            args.image_path, target_size=(IMG_HEIGHT, IMG_WIDTH)
         )
         image_array = np.array([tf.keras.utils.img_to_array(image)])
 

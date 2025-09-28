@@ -4,9 +4,35 @@ import argparse
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.augmentation import augment_image
+from utils.augmentation import augment_image, augment_dataset
 from utils.hyperparams import IMG_HEIGHT, IMG_WIDTH
 from pathlib import Path
+
+
+def save_dataset(dataset: tf.data.Dataset, name: str, class_names: List[str]) -> None:
+    """
+    Saves a TensorFlow dataset to a directory in image format without temp files.
+
+    Args:
+        dataset: TensorFlow dataset
+        name: Directory name to save the dataset
+        class_names: List of class names
+    """
+    class_counters = {class_name: 0 for class_name in class_names}
+    directory = Path(name)
+    directory.mkdir(parents=True, exist_ok=True)
+
+    for image, label in dataset.as_numpy_iterator():
+        image = image.astype(np.uint8)
+
+        class_name = class_names[label]
+        subdir = Path(directory/class_name)
+        subdir.mkdir(parents=True, exist_ok=True)
+        filename = f"{class_name}_{class_counters[class_name]:05d}.JPG"
+
+        image = tf.keras.utils.array_to_img(image)
+        image.save(subdir / filename)
+        class_counters[class_name] += 1
 
 
 def save_images(
@@ -101,8 +127,9 @@ def main() -> None:
                 batch_size=None,
             )
             class_names = dataset.class_names  # noqa: F841
+            dataset = augment_dataset(dataset)
+            save_dataset(dataset, "augmented_directory", class_names)
 
-            # TODO: Augment the dataset and save it to `augmented_directory`
             return
 
         print(f"🖼️  Processing single image: {path}")

@@ -51,9 +51,7 @@ def augment_image(image: np.ndarray) -> List[Tuple[np.ndarray, Optional[str]]]:
     """
 
     augmentation_dict = augmentations()
-    augmented_images = [
-        (image, None)
-    ]
+    augmented_images = [(image, None)]
 
     for name, augmentation in augmentation_dict.items():
         transform = A.Compose([augmentation])

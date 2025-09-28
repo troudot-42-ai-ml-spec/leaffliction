@@ -1,53 +1,97 @@
 import argparse
-from typing import Literal
+from pathlib import Path
 from transforms.registry import available_ops
 
-SrcType = Literal["multi", "single"]
+
+def validate_src_path(s: str) -> Path:
+    path = Path(s)
+    if path.exists():
+        return path.expanduser().resolve()
+    else:
+        raise ValueError(f"Path {s} does not exist")
+
+
+def config_single_parser(parser: argparse.ArgumentParser) -> None:
+    _ = parser.add_argument(
+        "-path", type=validate_src_path, required=True, help="Path to an image"
+    )
+    _ = parser.add_argument(
+        "--ops",
+        type=lambda s: s.split(","),
+        default=[
+            "gaussian_blur",
+            "rgb2lab",
+            "veins",
+            "otsu",
+            "fill_holes",
+            "analyse",
+            "select_mask",
+            "remove_background",
+            "crop",
+            "crop_blur",
+        ],
+        help=f"Comma-separated list of ops. Available: {', '.join(available_ops())}",
+    )
+    _ = parser.add_argument(
+        "--show",
+        type=str,
+        choices=["all", "one"],
+        default="all",
+        help="Choice to display all ops or just the last one",
+    )
+
+
+def config_multi_parser(parser: argparse.ArgumentParser) -> None:
+    _ = parser.add_argument(
+        "-src",
+        type=validate_src_path,
+        required=True,
+        help="Source directory (for loading images)",
+    )
+    _ = parser.add_argument(
+        "-dst",
+        type=validate_src_path,
+        required=True,
+        help="Destination directory (for saving results)",
+    )
+    _ = parser.add_argument(
+        "--ops",
+        type=lambda s: s.split(","),
+        default=[
+            "gaussian_blur",
+            "rgb2lab",
+            "veins",
+            "otsu",
+            "fill_holes",
+            "analyse",
+            "select_mask",
+            "crop",
+        ],
+        help=f"Comma-separated list of ops. Available: {', '.join(available_ops())}",
+    )
 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Apply leaf image transformations (Part 3)."
     )
-
-    # input / output
-    p.add_argument("-path", help="Path to an image")
-    p.add_argument("-src", help="Source directory (alternative to single file)")
-    p.add_argument("-dst", help="Destination directory (for saving results)")
-
-    # ops
-    p.add_argument(
-        "--ops",
-        type=lambda s: s.split(","),
-        default=[
-            "gaussian_blur",
-            "rgb2lab",
-            "otsu",
-            "fill_holes",
-            "analyse",
-            "select_mask",
-            # "crop",
-            "veins",
-        ],
-        help=f"Comma-separated list of ops. Available: {', '.join(available_ops())}",
+    subparsers = p.add_subparsers(
+        title="mode", description="modes", help="additional help"
     )
+    parser_single = subparsers.add_parser("single", help="Single image mode")
+    parser_multi = subparsers.add_parser("multi", help="Multiple images mode")
 
-    # display / save
-    p.add_argument(
-        "--show",
-        default=False,
-        help="Display results in a grid (if input is single file)",
-    )
-    p.add_argument("--save", default=False, help="Save the analytics")
+    config_single_parser(parser_single)
+    config_multi_parser(parser_multi)
 
-    return p.parse_args()
+    args = p.parse_args()
 
+    try:
+        if not args.path or args.path:
+            pass
+    except:  # noqa: E722
+        args.mode = "multi"
+    else:
+        args.mode = "single"
 
-def check_args(args: argparse.Namespace) -> SrcType:
-    if not args.path and args.src and args.dst:
-        if args.show:
-            raise Exception("Impossible to use --show with multiple images.")
-        return "multi"
-    if args.path and not args.src and not args.dst:
-        return "single"
-    raise Exception("Invalid -path, -dst, -src handling.")
+    return args

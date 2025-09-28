@@ -313,6 +313,8 @@ stringzilla==4.0.14
     # via albucore
 tblib==3.1.0
     # via distributed
+tdqm==0.0.1
+    # via leaffliction (pyproject.toml)
 tensorboard==2.20.0
     # via tensorflow
 tensorboard-data-server==0.7.2
@@ -332,6 +334,8 @@ toolz==1.0.0
     #   partd
 tornado==6.5.2
     # via distributed
+tqdm==4.67.1
+    # via tdqm
 traitlets==5.14.3
     # via
     #   ipython

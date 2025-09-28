@@ -8,4 +8,5 @@ from . import (
     remove_background,
     veins,
     crop,
+    crop_blur,
 )

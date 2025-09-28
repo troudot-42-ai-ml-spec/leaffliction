@@ -8,8 +8,13 @@ from ..registry import register
 class GaussianBlur:
     name = "gaussian_blur"
 
-    def __init__(self, ksize: int = 3) -> None:
+    def __init__(self, ksize: int = 5) -> None:
         self.ksize = (ksize, ksize)
 
     def apply(self, img: np.ndarray, ctx: Dict[str, Any]) -> np.ndarray:
-        return pcv.gaussian_blur(img=img, ksize=self.ksize)
+        if ctx.keys() != set(["_images"]):
+            raise ValueError(
+                "Gaussian blur requires be called right after image loading"
+            )
+        ctx["gaussian_blur"] = pcv.gaussian_blur(img=img, ksize=self.ksize)
+        return img

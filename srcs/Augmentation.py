@@ -21,7 +21,7 @@ def save_images(
     """
 
     image_name = image_path.stem
-    image_extension = image_path.suffix.lower() if image_path.suffix else '.jpg'
+    image_extension = image_path.suffix.lower() if image_path.suffix else ".jpg"
 
     for image, augmentation_name in images:
         if augmentation_name is None:
@@ -33,9 +33,7 @@ def save_images(
         image.save(output_filename)
 
 
-def display_augmented_image(
-    images: List[Tuple[np.ndarray, Optional[str]]]
-) -> None:
+def display_augmented_image(images: List[Tuple[np.ndarray, Optional[str]]]) -> None:
     """
     Display original image alongside all augmented versions.
 
@@ -108,10 +106,7 @@ def main() -> None:
             return
 
         print(f"🖼️  Processing single image: {path}")
-        image = tf.keras.utils.load_img(
-            str(path),
-            target_size=(IMG_HEIGHT, IMG_WIDTH)
-        )
+        image = tf.keras.utils.load_img(str(path), target_size=(IMG_HEIGHT, IMG_WIDTH))
         image_array = tf.keras.utils.img_to_array(image).astype(np.uint8)
 
         images = augment_image(image_array)

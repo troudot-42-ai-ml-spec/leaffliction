@@ -10,29 +10,18 @@ import multiprocessing as mp
 from tqdm import tqdm
 
 
-_OP_DEPS: Dict[str, Set[str]] = {
-    "rgb2lab": set(),
-    "otsu": {"rgb2lab"},
-    "fill_holes": {"otsu"},
-    "analyse": {"fill_holes"},
-    "select_mask": {"analyse"},
-    "crop": {"select_mask"},
-    "veins": {"otsu"},
-    "gaussian_blur": set(),
-    "remove_background": {"select_mask"},
+_OP_DEPS: Dict[str, List[str]] = {
+    "rgb2lab": [],
+    "gaussian_blur": [],
+    "otsu": ["rgb2lab"],
+    "fill_holes": ["otsu"],
+    "analyse": ["fill_holes"],
+    "select_mask": ["analyse"],
+    "veins": ["otsu"],
+    "remove_background": ["select_mask"],
+    "crop": ["select_mask"],
+    "crop_blur": ["crop"],
 }
-
-
-_ALIASES: Dict[str, Set[str]] = {
-    "crop_blur": {"remove_background", "crop", "gaussian_blur"},
-}
-
-
-def _expand_aliases(requested_ops: List[str]) -> List[str]:
-    expanded: List[str] = []
-    for op in requested_ops:
-        expanded.extend(_ALIASES.get(op, [op]))
-    return expanded
 
 
 def _resolve_deps_for(op: str, ordered: List[str], seen: Set[str]) -> None:
@@ -46,29 +35,17 @@ def _resolve_deps_for(op: str, ordered: List[str], seen: Set[str]) -> None:
 
 
 def resolve_ops(requested_ops: List[str]) -> List[str]:
-    requested_ops = _expand_aliases(requested_ops)
     ordered: List[str] = []
     seen: Set[str] = set()
 
-    valid_ops = set(available_ops()) | set(_ALIASES.keys())
     for op in requested_ops:
-        if op not in valid_ops:
+        if op not in available_ops():
             raise Exception(f"{op} is not a valid operation!")
 
     for op in requested_ops:
-        for real_op in _ALIASES.get(op, [op]):
-            _resolve_deps_for(real_op, ordered, seen)
+        _resolve_deps_for(op, ordered, seen)
 
     return ordered
-
-
-_OPS: List[Transformation] = []
-
-
-def build_ops(ops_list: List[str]) -> None:
-    ordered_ops = resolve_ops(ops_list)
-    for op in ordered_ops:
-        _OPS.append(build(op))
 
 
 def _build_ops(ops_list: List[str]) -> List[Transformation]:
@@ -79,17 +56,16 @@ def _build_ops(ops_list: List[str]) -> List[Transformation]:
     return ops
 
 
-def get_ops() -> List[Transformation]:
-    return _OPS
-
-
 def extract_variants(
     original_img: np.ndarray,
     ctx: Dict[str, Any],
-    applied_ops: Set[str],
-    requested_ops: Set[str],
+    applied_ops: List[str],
+    requested_ops: List[str],
 ) -> Dict[str, np.ndarray]:
     variants: Dict[str, np.ndarray] = {"original": original_img}
+
+    if "gaussian_blur" in applied_ops and "gaussian_blur" in ctx:
+        variants["gaussian_blur"] = ctx["gaussian_blur"]
 
     if "lab" in ctx:
         variants["lab_l"] = ctx["lab"]["l"]
@@ -112,10 +88,8 @@ def extract_variants(
     if "crop" in applied_ops and "crop" in images:
         variants["crop"] = images["crop"]
 
-    if "crop_blur" in requested_ops and "gaussian_blur" in images:
-        variants["crop_blur"] = images["gaussian_blur"]
-    elif "gaussian_blur" in applied_ops and "gaussian_blur" in images:
-        variants["gaussian_blur"] = images["gaussian_blur"]
+    if "crop_blur" in requested_ops:
+        variants["crop_blur"] = images["crop_blur"]
 
     return variants
 
@@ -125,9 +99,8 @@ def process_single_image(
     path: Path,
     args: Namespace,
     ops: List[Transformation],
-    applied_ops: Set[str],
-    requested_ops: Set[str],
-    dst: Optional[Path] = None,
+    applied_ops: List[str],
+    requested_ops: List[str],
 ) -> None:
     ctx: Dict[str, Any] = {"_images": {"original": img}}
     for op in ops:
@@ -139,20 +112,20 @@ def process_single_image(
             pass
 
     variants = extract_variants(
-        ctx["_images"]["original"],
-        ctx,
-        applied_ops,
-        requested_ops
+        ctx["_images"]["original"], ctx, applied_ops, requested_ops
     )
 
-    if args.show:
-        show_grid(
-            list(variants.values()), list(variants.keys()), max_cols=len(variants)
-        )
-    if dst:
+    if args.mode == "single":
+        if args.show == "all":
+            show_grid(
+                list(variants.values()), list(variants.keys()), max_cols=len(variants)
+            )
+        elif args.show == "one":
+            pcv.plot_image(variants[requested_ops[-1]])
+    elif args.mode == "multi":
         for name, variant in variants.items():
             # dst/<classe>/<variant>/...
-            save_path = dst / path.parent.name / name
+            save_path = args.dst / path.parent.name / name
             save_path.mkdir(parents=True, exist_ok=True)
             save_path = save_path / f"{path.stem}{path.suffix}"
             pcv.print_image(variant, str(save_path.absolute()))
@@ -162,47 +135,54 @@ def process(
     task_queue: mp.Queue,
     results_queue: mp.Queue,
     args: Namespace,
-    dst: Optional[Path] = None
+    dst: Optional[Path] = None,
 ) -> None:
     ops = _build_ops(args.ops)
-    applied_ops: Set[str] = {getattr(op, "name", op.__class__.__name__) for op in ops}
-    requested_ops: Set[str] = {op for op in args.ops}
-    while True:
-        path = task_queue.get()
-        if path is None:
-            break
-        pcv.outputs.clear()
-        img, _, _ = pcv.readimage(filename=str(path.absolute()))
-        process_single_image(img, path, args, ops, applied_ops, requested_ops, dst)
-        results_queue.put(path)
+    applied_ops: List[str] = [getattr(op, "name", op.__class__.__name__) for op in ops]
+    requested_ops: List[str] = [op for op in args.ops]
+    try:
+        while True:
+            path = task_queue.get()
+            if path is None:
+                break
+            pcv.outputs.clear()
+            img, _, _ = pcv.readimage(filename=str(path.absolute()))
+            process_single_image(img, path, args, ops, applied_ops, requested_ops)
+            results_queue.put(path)
+    except Exception as e:
+        print(f"Error processing {path}: {e}")
+    finally:
+        results_queue.put(None)
 
 
 def pipeline(
     path_list: List[Path],
     args: Namespace,
-    dst: Optional[Path] = None
 ) -> None:
-    if not _OPS:
-        build_ops(args.ops)
-
     task_queue: mp.Queue = mp.Queue()
     results_queue: mp.Queue = mp.Queue()
 
-    for path in path_list:
-        task_queue.put(path)
+    try:
+        for path in path_list:
+            task_queue.put(path)
 
-    num_processes = mp.cpu_count() - 2 if mp.cpu_count() > 2 else 1
-    for _ in range(num_processes):
-        task_queue.put(None)
+        num_processes = mp.cpu_count() - 2 if mp.cpu_count() > 2 else 1
+        for _ in range(num_processes):
+            task_queue.put(None)
 
-    processes = []
-    for _ in range(num_processes):
-        p = mp.Process(target=process, args=(task_queue, results_queue, args, dst))
-        p.start()
-        processes.append(p)
+        processes = []
+        for _ in range(num_processes):
+            p = mp.Process(target=process, args=(task_queue, results_queue, args))
+            p.start()
+            processes.append(p)
 
-    for _ in tqdm(range(len(path_list)), desc="Processing images"):
-        results_queue.get()
+        for _ in tqdm(range(len(path_list)), desc="Processing images"):
+            results_queue.get()
 
-    for p in processes:
-        p.join()
+        for p in processes:
+            p.join()
+    except Exception as e:
+        print(f"Error occurred: {e}")
+    finally:
+        task_queue.close()
+        results_queue.close()

@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple, Generator
+from typing import List, Dict, Tuple, Generator, Optional
 import os
 import tensorflow as tf
 import albumentations as A
@@ -39,7 +39,7 @@ def augmentations() -> Dict[str, A.BasicTransform]:
     }
 
 
-def augment_image(image: np.ndarray) -> List[Tuple[str, np.ndarray]]:
+def augment_image(image: np.ndarray) -> List[Tuple[np.ndarray, Optional[str]]]:
     """
     Apply all available augmentations to a single image and return the results.
 
@@ -51,12 +51,14 @@ def augment_image(image: np.ndarray) -> List[Tuple[str, np.ndarray]]:
     """
 
     augmentation_dict = augmentations()
-    augmented_images = []
+    augmented_images = [
+        (image, None)
+    ]
 
     for name, augmentation in augmentation_dict.items():
         transform = A.Compose([augmentation])
         augmented = transform(image=image)["image"]
-        augmented_images.append((name, augmented))
+        augmented_images.append((augmented, name))
 
     return augmented_images
 

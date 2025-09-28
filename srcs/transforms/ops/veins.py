@@ -1,6 +1,6 @@
 import numpy as np
-from plantcv import plantcv as pcv
-from typing import Dict
+from plantcv import plantcv as pcv  # type: ignore
+from typing import Dict, Any
 from ..registry import register
 
 
@@ -8,15 +8,16 @@ from ..registry import register
 class Veins:
     name = "veins"
 
-    def __init__(self): ...
+    def __init__(self) -> None: ...
 
-    def apply(self, img, ctx):
+    def apply(self, img: np.ndarray, ctx: Dict[str, Any]) -> np.ndarray:
         if "lab" not in ctx or "mask" not in ctx:
             raise Exception("Rgb2Lab and Mask has to be called before Veins!")
         if "l" not in ctx["lab"]:
             raise Exception("Lab has to have l channel!")
         labs: Dict[str, np.ndarray] = ctx["lab"]
-        ct = ctx["veins"] = {}
+        ct: Dict[str, np.ndarray] = {}
+        ctx["veins"] = ct
         for channel, _img in labs.items():
             mask_applied_otsu = pcv.apply_mask(
                 ctx["lab"]["l"], ctx["mask"][channel], "black"

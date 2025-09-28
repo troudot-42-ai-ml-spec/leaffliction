@@ -1,5 +1,5 @@
 import numpy as np
-from plantcv import plantcv as pcv
+from plantcv import plantcv as pcv  # type: ignore
 from typing import Dict, Any
 from ..registry import register
 

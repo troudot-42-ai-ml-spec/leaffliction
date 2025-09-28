@@ -7,7 +7,7 @@ from ..registry import register
 class Crop:
     name = "crop"
 
-    def __init__(self, margin: int = 0) -> None:
+    def __init__(self, margin: int = 5) -> None:
         self.margin = margin
 
     def apply(self, img: np.ndarray, ctx: Dict[str, Any]) -> np.ndarray:

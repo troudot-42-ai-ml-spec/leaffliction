@@ -13,6 +13,9 @@ def register(name: str):
     return wrap
 
 
+from . import ops as _ops  # noqa: F401,E402
+
+
 def build(name: str, **kwargs) -> Transformation:
     return _REGISTRY[name](**kwargs)
 

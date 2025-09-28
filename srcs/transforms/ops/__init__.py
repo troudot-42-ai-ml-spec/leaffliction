@@ -5,6 +5,7 @@ from . import (
     fill_holes,
     analyse,
     select_mask,
+    remove_background,
     veins,
     crop,
 )

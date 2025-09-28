@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Dict
+from typing import Dict, Any
 from ..registry import register
 
 
@@ -18,13 +18,12 @@ def calculate_smoothness(area: float, perimeter: float) -> float:
 class SelectMask:
     name = "select_mask"
 
-    def __init__(self): ...
+    def __init__(self) -> None: ...
 
-    def apply(self, img, ctx):
+    def apply(self, img: np.ndarray, ctx: Dict[str, Any]) -> np.ndarray:
         if "analyse" not in ctx or "analyse_results" not in ctx:
             raise Exception("Analyse has to be called before SelectMask!")
         analyse_results: Dict[str, Dict[str, float]] = ctx["analyse_results"]
-        ctx["selected_mask"] = {}
         scores: Dict[str, float] = {}
 
         for channel, results in analyse_results.items():
@@ -41,6 +40,6 @@ class SelectMask:
         if not scores:
             raise Exception("No valid masks found after analysis!")
 
-        best_channel = max(scores, key=scores.get)
+        best_channel: str = max(scores, key=lambda k: scores[k])
         ctx["selected_mask"] = best_channel
         return img

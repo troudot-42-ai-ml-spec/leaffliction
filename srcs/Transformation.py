@@ -1,7 +1,7 @@
 from argparse import Namespace
 from pathlib import Path
 from typing import List
-from pipeline.transforms_pipeline import pipeline
+from utils.transforms import pipeline
 from utils.parsing.args import parse_args
 from utils.parsing.get_all_images_path import get_all_images_path
 

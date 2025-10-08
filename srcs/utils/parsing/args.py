@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-import re
 from transforms.registry import available_ops
 
 

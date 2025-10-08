@@ -8,6 +8,8 @@ from plantcv import plantcv as pcv
 from utils.plotting.grid import show_grid
 import multiprocessing as mp
 from tqdm import tqdm
+import signal
+import sys
 
 
 _OP_DEPS: Dict[str, List[str]] = {
@@ -17,7 +19,7 @@ _OP_DEPS: Dict[str, List[str]] = {
     "fill_holes": ["otsu"],
     "analyse": ["fill_holes"],
     "select_mask": ["analyse"],
-    "veins": ["otsu"],
+    "veins": ["select_mask"],
     "remove_background": ["select_mask"],
     "crop": ["select_mask"],
     "crop_blur": ["crop"],
@@ -77,8 +79,8 @@ def extract_variants(
     if "analyse" in ctx and "selected_mask" in ctx:
         variants["selected_analysed"] = ctx["analyse"][ctx["selected_mask"]]
 
-    if "veins" in ctx and "selected_mask" in ctx:
-        variants["veins_selected"] = ctx["veins"][ctx["selected_mask"]]
+    if "veins" in ctx:
+        variants["veins"] = ctx["veins"]
 
     images = ctx.get("_images", {})
 
@@ -92,6 +94,18 @@ def extract_variants(
         variants["crop_blur"] = images["crop_blur"]
 
     return variants
+
+
+def kill_processes(processes: list[mp.Process], pbar: tqdm | None = None) -> None:
+    if pbar:
+        pbar.close()
+    for p in processes:
+        if p.is_alive():
+            p.terminate()
+    for p in processes:
+        if p.is_alive():
+            p.kill()
+            p.join()
 
 
 def process_single_image(  # noqa: C901
@@ -158,6 +172,8 @@ def process(
     args: Namespace,
     dst: Optional[Path] = None,
 ) -> None:
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
     ops = _build_ops(args.ops)
     applied_ops: List[str] = [getattr(op, "name", op.__class__.__name__) for op in ops]
     requested_ops: List[str] = [op for op in args.ops]
@@ -176,12 +192,14 @@ def process(
         results_queue.put(None)
 
 
-def pipeline(
+def pipeline(  # noqa: C901
     path_list: List[Path],
     args: Namespace,
 ) -> None:
     task_queue: mp.Queue = mp.Queue()
     results_queue: mp.Queue = mp.Queue()
+    processes = []
+    pbar = None
 
     try:
         for path in path_list:
@@ -191,19 +209,48 @@ def pipeline(
         for _ in range(num_processes):
             task_queue.put(None)
 
-        processes = []
         for _ in range(num_processes):
             p = mp.Process(target=process, args=(task_queue, results_queue, args))
             p.start()
             processes.append(p)
 
-        for _ in tqdm(range(len(path_list)), desc="Processing images"):
-            results_queue.get()
+        pbar = tqdm(total=len(path_list), desc="Processing images")
+        completed = 0
+        while completed < len(path_list):
+            try:
+                result = results_queue.get(timeout=0.1)
+                if result is not None:
+                    completed += 1
+                    pbar.update(1)
+            except KeyboardInterrupt:
+                raise
+            except:  # noqa: E722
+                pass
 
-        for p in processes:
-            p.join()
-    except Exception as e:
-        print(f"Error occurred: {e}")
+        kill_processes(processes, pbar)
+    except KeyboardInterrupt:
+        kill_processes(processes, pbar)
+        sys.exit(0)
+
+    except Exception:
+        kill_processes(processes, pbar)
+        sys.exit(1)
     finally:
-        task_queue.close()
-        results_queue.close()
+        try:
+            while not task_queue.empty():
+                task_queue.get_nowait()
+        except:  # noqa: E722
+            pass
+        try:
+            while not results_queue.empty():
+                results_queue.get_nowait()
+        except:  # noqa: E722
+            pass
+
+        try:
+            task_queue.close()
+            results_queue.close()
+            task_queue.join_thread()
+            results_queue.join_thread()
+        except:  # noqa: E722
+            pass

@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+import re
 from transforms.registry import available_ops
 
 
@@ -91,7 +92,7 @@ def parse_args() -> argparse.Namespace:
         description="Apply leaf image transformations (Part 3)."
     )
     subparsers = p.add_subparsers(
-        title="mode", description="modes", help="additional help"
+        title="mode", required=True, description="modes", help="additional help"
     )
     parser_single = subparsers.add_parser("single", help="Single image mode")
     parser_multi = subparsers.add_parser("multi", help="Multiple images mode")

@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import tensorflow as tf
 from pathlib import Path
@@ -7,14 +6,13 @@ from transforms.registry import build, available_ops
 from typing import List, Literal, Dict, Any, Set
 from plantcv import plantcv as pcv
 from utils.plotting.grid import show_grid
-from tqdm import tqdm
 
 
 _OP_DEPS: Dict[str, List[str]] = {
     "rgb2lab": [],
     "gaussian_blur": [],
-    "otsu": ["rgb2lab"],
-    "fill_holes": ["otsu"],
+    "mask": ["rgb2lab"],
+    "fill_holes": ["mask"],
     "analyse": ["fill_holes"],
     "select_mask": ["analyse"],
     "veins": ["select_mask"],
@@ -71,7 +69,7 @@ def extract_variants(  # noqa: C901
         variants["lab_l"] = ctx["lab"]["l"]
 
     if "mask" in ctx:
-        ch = ctx["selected_mask"] if "selected_mask" in ctx else "b"
+        ch = ctx["selected_mask"] if "selected_mask" in ctx else "l"
         variants["mask"] = ctx["mask"][ch]
 
         if "fill_holes" in ctx:
@@ -186,9 +184,6 @@ def transform_dataset(dataset: tf.data.Dataset, ops: list[str]) -> tf.data.Datas
     applied_ops = [getattr(op, "name", op.__class__.__name__) for op in _ops]
     requested_ops = [op for op in ops]
 
-    os.makedirs(".tf-cache/transformation", exist_ok=True)
-
-    # Cache first, then iterate
     transformed_dataset = dataset.map(
         lambda img, label: (
             tf.py_function(transform_image, [img], tf.uint8),
@@ -196,11 +191,6 @@ def transform_dataset(dataset: tf.data.Dataset, ops: list[str]) -> tf.data.Datas
         ),
         num_parallel_calls=tf.data.AUTOTUNE,
     )
-
-    for img, label in tqdm(transformed_dataset):
-        pass
-
-    transformed_dataset = transformed_dataset.cache(".tf-cache/transformation")
 
     transformed_dataset.class_names = dataset.class_names
 

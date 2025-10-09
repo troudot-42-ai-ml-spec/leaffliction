@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from utils.augmentation import augment_image, augment_dataset
 from utils.hyperparams import IMG_HEIGHT, IMG_WIDTH
 from pathlib import Path
+from tqdm import tqdm
 
 
 def save_dataset(dataset: tf.data.Dataset, name: str, class_names: List[str]) -> None:
@@ -22,11 +23,11 @@ def save_dataset(dataset: tf.data.Dataset, name: str, class_names: List[str]) ->
     directory = Path(name)
     directory.mkdir(parents=True, exist_ok=True)
 
-    for image, label in dataset.as_numpy_iterator():
+    for image, label in tqdm(dataset.as_numpy_iterator(), desc="Saving images"):
         image = image.astype(np.uint8)
 
         class_name = class_names[label]
-        subdir = Path(directory/class_name)
+        subdir = Path(directory / class_name)
         subdir.mkdir(parents=True, exist_ok=True)
         filename = f"{class_name}_{class_counters[class_name]:05d}.JPG"
 

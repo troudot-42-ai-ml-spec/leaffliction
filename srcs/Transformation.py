@@ -5,6 +5,7 @@ from utils.transforms import transform_one_image, transform_dataset
 from utils.parsing.args import parse_args
 from utils.hyperparams import IMG_HEIGHT, IMG_WIDTH
 from Augmentation import save_dataset
+import shutil
 
 if __name__ == "__main__":
     args: Namespace = parse_args()
@@ -13,6 +14,11 @@ if __name__ == "__main__":
         try:
             path = args.src
             if path.is_dir():
+                # TEMPORARY FIX: Clean up old cache
+                cache_dir = Path(".tf-cache/transformation")
+                if cache_dir.exists():
+                    shutil.rmtree(cache_dir)
+
                 print(f"📁 Processing directory: {path}")
                 dataset = tf.keras.utils.image_dataset_from_directory(
                     directory=str(path),

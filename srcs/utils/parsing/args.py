@@ -72,18 +72,6 @@ def config_multi_parser(parser: argparse.ArgumentParser) -> None:
         ],
         help=f"Comma-separated list of ops. Available: {', '.join(available_ops())}",
     )
-    _ = parser.add_argument(
-        "--save",
-        type=str,
-        choices=["all", "one"],
-        default="one",
-        help="Choice to save all ops or just the last one",
-    )
-    _ = parser.add_argument(
-        "--split",
-        action="store_true",
-        help="Split mode for multiple images",
-    )
 
 
 def parse_args() -> argparse.Namespace:

@@ -17,5 +17,5 @@ class Otsu:
         ctx["mask"] = {}
         for channel, _img in lab.items():
             type = "light" if channel == "b" else "dark"
-            ctx["mask"][channel] = pcv.threshold.otsu(_img, type)
+            ctx["mask"][channel] = pcv.threshold.otsu(_img.astype(np.uint8), type)
         return img

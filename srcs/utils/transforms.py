@@ -1,15 +1,13 @@
-from pathlib import Path
+import os
 import numpy as np
-from argparse import Namespace
+import tensorflow as tf
+from pathlib import Path
 from transforms.base import Transformation
 from transforms.registry import build, available_ops
-from typing import List, Optional, Dict, Any, Set
+from typing import List, Literal, Dict, Any, Set
 from plantcv import plantcv as pcv
 from utils.plotting.grid import show_grid
-import multiprocessing as mp
 from tqdm import tqdm
-import signal
-import sys
 
 
 _OP_DEPS: Dict[str, List[str]] = {
@@ -96,22 +94,9 @@ def extract_variants(
     return variants
 
 
-def kill_processes(processes: list[mp.Process], pbar: tqdm | None = None) -> None:
-    if pbar:
-        pbar.close()
-    for p in processes:
-        if p.is_alive():
-            p.terminate()
-    for p in processes:
-        if p.is_alive():
-            p.kill()
-            p.join()
-
-
 def process_single_image(  # noqa: C901
     img: np.ndarray,
-    path: Path,
-    args: Namespace,
+    show: Literal["all", "one"],
     ops: List[Transformation],
     applied_ops: List[str],
     requested_ops: List[str],
@@ -132,125 +117,91 @@ def process_single_image(  # noqa: C901
     if not variants:
         return
 
-    if args.mode == "single":
-        if args.show == "all":
-            show_grid(
-                list(variants.values()), list(variants.keys()), max_cols=len(variants)
-            )
-        elif args.show == "one":
-            pcv.plot_image(variants[requested_ops[-1]])
-    elif args.mode == "multi":
-        # dst/<classe>/<variant>/...
-        if args.save == "all":
-            for name, variant in variants.items():
-                if args.split:
-                    save_path = args.dst / path.parent.name / name
-                    save_path.mkdir(parents=True, exist_ok=True)
-                    save_path = save_path / f"{path.stem}{path.suffix}"
-                    pcv.print_image(variant, str(save_path.absolute()))
-                else:
-                    save_path = args.dst / path.parent.name
-                    save_path.mkdir(parents=True, exist_ok=True)
-                    save_path = save_path / f"{path.stem}_{name}{path.suffix}"
-                    pcv.print_image(variant, str(save_path.absolute()))
-        elif args.save == "one":
-            if args.split:
-                save_path = args.dst / path.parent.name / requested_ops[-1]
-                save_path.mkdir(parents=True, exist_ok=True)
-                save_path = save_path / f"{path.stem}{path.suffix}"
-                pcv.print_image(variants[requested_ops[-1]], str(save_path.absolute()))
-            else:
-                save_path = args.dst / path.parent.name
-                save_path.mkdir(parents=True, exist_ok=True)
-                save_path = save_path / f"{path.stem}_{requested_ops[-1]}{path.suffix}"
-                pcv.print_image(variants[requested_ops[-1]], str(save_path.absolute()))
+    if show == "all":
+        show_grid(
+            list(variants.values()), list(variants.keys()), max_cols=len(variants)
+        )
+    elif show == "one":
+        pcv.plot_image(variants[requested_ops[-1]])
 
 
-def process(
-    task_queue: mp.Queue,
-    results_queue: mp.Queue,
-    args: Namespace,
-    dst: Optional[Path] = None,
+def transform_image(
+    image: np.ndarray,
+) -> np.ndarray:
+    """
+    Transform a single image.
+
+    Args:
+        image: Input image
+        label: Input label
+        ops: List of transformations to apply
+        requested_ops: List of requested operations
+        applied_ops: List of applied operations
+
+    Returns:
+        Transformed image and label
+    """
+    _img = image.numpy()
+    ctx: Dict[str, Any] = {"_images": {"original": _img}}
+    for op in _ops:
+        _img = op.apply(_img, ctx)
+        try:
+            op_name = getattr(op, "name", None) or op.__class__.__name__
+            ctx["_images"][op_name] = _img
+        except Exception:
+            pass
+
+    variants = extract_variants(
+        ctx["_images"]["original"], ctx, applied_ops, requested_ops
+    )
+
+    _img = variants[requested_ops[-1]]
+
+    return _img
+
+
+def transform_dataset(dataset: tf.data.Dataset, ops: list[str]) -> tf.data.Dataset:
+    """
+    Transform the dataset to create preprocessed samples.
+
+    Args:
+        dataset: Original tf.data.Dataset
+
+    Returns:
+        Transformed tf.data.Dataset
+    """
+    global _ops, applied_ops, requested_ops
+    _ops = _build_ops(ops)
+    applied_ops = [getattr(op, "name", op.__class__.__name__) for op in _ops]
+    requested_ops = [op for op in ops]
+
+    os.makedirs(".tf-cache/transformation", exist_ok=True)
+
+    # Cache first, then iterate
+    transformed_dataset = dataset.map(
+        lambda img, label: (
+            tf.py_function(transform_image, [img], tf.uint8),
+            label,
+        ),
+        num_parallel_calls=tf.data.AUTOTUNE,
+    )
+
+    for img, label in tqdm(transformed_dataset):
+        pass
+
+    transformed_dataset = transformed_dataset.cache(".tf-cache/transformation")
+
+    transformed_dataset.class_names = dataset.class_names
+
+    return transformed_dataset
+
+
+def transform_one_image(
+    path: Path, ops: list[str], show: Literal["all", "one"]
 ) -> None:
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    _ops = _build_ops(ops)
+    applied_ops: list[str] = [getattr(op, "name", op.__class__.__name__) for op in _ops]
+    requested_ops: list[str] = [op for op in ops]
 
-    ops = _build_ops(args.ops)
-    applied_ops: List[str] = [getattr(op, "name", op.__class__.__name__) for op in ops]
-    requested_ops: List[str] = [op for op in args.ops]
-    try:
-        while True:
-            path = task_queue.get()
-            if path is None:
-                break
-            pcv.outputs.clear()
-            img, _, _ = pcv.readimage(filename=str(path.absolute()))
-            process_single_image(img, path, args, ops, applied_ops, requested_ops)
-            results_queue.put(path)
-    except Exception as e:
-        print(f"Error processing {path}: {e}")
-    finally:
-        results_queue.put(None)
-
-
-def pipeline(  # noqa: C901
-    path_list: List[Path],
-    args: Namespace,
-) -> None:
-    task_queue: mp.Queue = mp.Queue()
-    results_queue: mp.Queue = mp.Queue()
-    processes = []
-    pbar = None
-
-    try:
-        for path in path_list:
-            task_queue.put(path)
-
-        num_processes = mp.cpu_count() - 2 if mp.cpu_count() > 2 else 1
-        for _ in range(num_processes):
-            task_queue.put(None)
-
-        for _ in range(num_processes):
-            p = mp.Process(target=process, args=(task_queue, results_queue, args))
-            p.start()
-            processes.append(p)
-
-        pbar = tqdm(total=len(path_list), desc="Processing images")
-        completed = 0
-        while completed < len(path_list):
-            try:
-                result = results_queue.get(timeout=0.1)
-                if result is not None:
-                    completed += 1
-                    pbar.update(1)
-            except KeyboardInterrupt:
-                raise
-            except:  # noqa: E722
-                pass
-
-        kill_processes(processes, pbar)
-    except KeyboardInterrupt:
-        kill_processes(processes, pbar)
-        sys.exit(0)
-
-    except Exception:
-        kill_processes(processes, pbar)
-        sys.exit(1)
-    finally:
-        try:
-            while not task_queue.empty():
-                task_queue.get_nowait()
-        except:  # noqa: E722
-            pass
-        try:
-            while not results_queue.empty():
-                results_queue.get_nowait()
-        except:  # noqa: E722
-            pass
-
-        try:
-            task_queue.close()
-            results_queue.close()
-            task_queue.join_thread()
-            results_queue.join_thread()
-        except:  # noqa: E722
-            pass
+    img, _, _ = pcv.readimage(filename=str(path.absolute()))
+    process_single_image(img, show, _ops, applied_ops, requested_ops)

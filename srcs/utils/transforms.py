@@ -56,7 +56,7 @@ def _build_ops(ops_list: List[str]) -> List[Transformation]:
     return ops
 
 
-def extract_variants(
+def extract_variants(  # noqa: C901
     original_img: np.ndarray,
     ctx: Dict[str, Any],
     applied_ops: List[str],
@@ -70,12 +70,22 @@ def extract_variants(
     if "lab" in ctx:
         variants["lab_l"] = ctx["lab"]["l"]
 
+    if "mask" in ctx:
+        ch = ctx["selected_mask"] if "selected_mask" in ctx else "b"
+        variants["mask"] = ctx["mask"][ch]
+
+        if "fill_holes" in ctx:
+            variants["fill_holes"] = ctx["fill_holes"][ch]
+
     if "mask" in ctx and "selected_mask" in ctx:
         selected_ch = ctx["selected_mask"]
-        variants["mask_selected"] = ctx["mask"][selected_ch]
+        if "fill_holes" in ctx:
+            variants["select_mask"] = ctx["fill_holes"][selected_ch]
+        else:
+            variants["select_mask"] = ctx["mask"][selected_ch]
 
     if "analyse" in ctx and "selected_mask" in ctx:
-        variants["selected_analysed"] = ctx["analyse"][ctx["selected_mask"]]
+        variants["analyse"] = ctx["analyse"][ctx["selected_mask"]]
 
     if "veins" in ctx:
         variants["veins"] = ctx["veins"]
@@ -155,7 +165,8 @@ def transform_image(
         ctx["_images"]["original"], ctx, applied_ops, requested_ops
     )
 
-    _img = variants[requested_ops[-1]]
+    if requested_ops[-1] in variants:
+        _img = variants[requested_ops[-1]]
 
     return _img
 

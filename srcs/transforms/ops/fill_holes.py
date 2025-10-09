@@ -14,6 +14,7 @@ class FillHoles:
         if "mask" not in ctx:
             raise Exception("Otsu has to be called before FillHoles!")
         otsu: Dict[str, np.ndarray] = ctx["mask"]
+        ctx["fill_holes"] = {}
         for channel, _img in otsu.items():
-            ctx["mask"][channel] = pcv.fill_holes(_img)
+            ctx["fill_holes"][channel] = pcv.fill_holes(_img)
         return img

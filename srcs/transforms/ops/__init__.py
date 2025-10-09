@@ -1,7 +1,7 @@
 from . import (
     gaussian,
     rgb2lab,
-    otsu,
+    mask,
     fill_holes,
     analyse,
     select_mask,

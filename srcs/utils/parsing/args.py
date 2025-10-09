@@ -24,7 +24,7 @@ def config_single_parser(parser: argparse.ArgumentParser) -> None:
             "gaussian_blur",
             "rgb2lab",
             "veins",
-            "otsu",
+            "mask",
             "fill_holes",
             "analyse",
             "select_mask",
@@ -62,7 +62,7 @@ def config_multi_parser(parser: argparse.ArgumentParser) -> None:
         default=[
             "gaussian_blur",
             "rgb2lab",
-            "otsu",
+            "mask",
             "fill_holes",
             "analyse",
             "select_mask",

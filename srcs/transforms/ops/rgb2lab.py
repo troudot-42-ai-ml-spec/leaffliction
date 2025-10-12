@@ -15,5 +15,5 @@ class Rgb2Lab:
             ctx["lab"] = {}
             _img = img.copy() if "gaussian_blur" not in ctx else ctx["gaussian_blur"]
             for channel in "lab":
-                ctx["lab"][channel] = pcv.rgb2gray_lab(_img, channel)
+                ctx["lab"][channel] = pcv.rgb2gray_lab(_img.astype(np.uint8), channel)
         return img

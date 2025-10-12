@@ -1,9 +1,10 @@
 import numpy as np
+import os
 import tensorflow as tf
 from pathlib import Path
 from transforms.base import Transformation
 from transforms.registry import build, available_ops
-from typing import List, Literal, Dict, Any, Set
+from typing import List, Literal, Dict, Any, Set, Generator, Tuple
 from plantcv import plantcv as pcv
 from utils.plotting.grid import show_grid
 
@@ -133,67 +134,80 @@ def process_single_image(  # noqa: C901
         pcv.plot_image(variants[requested_ops[-1]])
 
 
-def transform_image(
-    image: np.ndarray,
-) -> np.ndarray:
+def create_transformed_generator(
+    dataset: tf.data.Dataset, ops: List[str]
+) -> Generator[Tuple[np.ndarray, int], None, None]:
     """
-    Transform a single image.
+    Generator that yields transformed images.
 
     Args:
-        image: Input image
-        label: Input label
-        ops: List of transformations to apply
-        requested_ops: List of requested operations
-        applied_ops: List of applied operations
+        dataset: Original tf.data.Dataset
+        ops: List of transformation operations to apply
 
     Returns:
-        Transformed image and label
+        Generator yielding tuples of (image, label)
     """
-    _img = image.numpy()
-    ctx: Dict[str, Any] = {"_images": {"original": _img}}
-    for op in _ops:
-        _img = op.apply(_img, ctx)
-        try:
-            op_name = getattr(op, "name", None) or op.__class__.__name__
-            ctx["_images"][op_name] = _img
-        except Exception:
-            pass
+    _ops = _build_ops(ops)
+    applied_ops = [getattr(op, "name", op.__class__.__name__) for op in _ops]
+    requested_ops = [op for op in ops]
 
-    variants = extract_variants(
-        ctx["_images"]["original"], ctx, applied_ops, requested_ops
-    )
+    print(f"⏳ Applying transformations: {', '.join(requested_ops)}")
 
-    if requested_ops[-1] in variants:
-        _img = variants[requested_ops[-1]]
+    # Yield transformed samples
+    for image, label in dataset.as_numpy_iterator():
+        ctx: Dict[str, Any] = {"_images": {"original": image}}
+        pcv.outputs.clear()
 
-    return _img
+        _img = image
+        for op in _ops:
+            _img = op.apply(_img, ctx)
+            if _img.shape == (5, 5, 3):
+                print(f"⚠️  Transformation {op} returned a dummy image, skipping.")
+                _img = image
+            try:
+                op_name = getattr(op, "name", None) or op.__class__.__name__
+                ctx["_images"][op_name] = _img
+            except Exception:
+                pass
+
+        # variants = extract_variants(
+        #     ctx["_images"]["original"], ctx, applied_ops, requested_ops
+        # )
+
+        # if requested_ops[-1] in variants:
+        #     _img = variants[requested_ops[-1]]
+
+        yield _img, label
 
 
-def transform_dataset(dataset: tf.data.Dataset, ops: list[str]) -> tf.data.Dataset:
+def transform_dataset(dataset: tf.data.Dataset, ops: List[str]) -> tf.data.Dataset:
     """
     Transform the dataset to create preprocessed samples.
 
     Args:
         dataset: Original tf.data.Dataset
+        ops: List of transformation operations to apply
 
     Returns:
         Transformed tf.data.Dataset
     """
-    global _ops, applied_ops, requested_ops
-    _ops = _build_ops(ops)
-    applied_ops = [getattr(op, "name", op.__class__.__name__) for op in _ops]
-    requested_ops = [op for op in ops]
 
-    transformed_dataset = dataset.map(
-        lambda img, label: (
-            tf.py_function(transform_image, [img], tf.uint8),
-            label,
-        ),
-        num_parallel_calls=tf.data.AUTOTUNE,
+    os.makedirs(".tf-cache/transformation", exist_ok=True)
+    transformed_dataset = tf.data.Dataset.from_generator(
+        lambda: create_transformed_generator(dataset, ops),
+        output_signature=dataset.element_spec,
+    ).cache(filename=".tf-cache/transformation/")
+
+    # Force evaluation to apply transformations immediately (and apply cardinality)
+    cardinality = 0
+    for _ in transformed_dataset.as_numpy_iterator():
+        cardinality += 1
+
+    transformed_dataset = transformed_dataset.apply(
+        tf.data.experimental.assert_cardinality(cardinality)
     )
 
     transformed_dataset.class_names = dataset.class_names
-
     return transformed_dataset
 
 

@@ -148,7 +148,6 @@ def create_transformed_generator(
         Generator yielding tuples of (image, label)
     """
     _ops = _build_ops(ops)
-    applied_ops = [getattr(op, "name", op.__class__.__name__) for op in _ops]
     requested_ops = [op for op in ops]
 
     print(f"⏳ Applying transformations: {', '.join(requested_ops)}")
@@ -169,13 +168,6 @@ def create_transformed_generator(
                 ctx["_images"][op_name] = _img
             except Exception:
                 pass
-
-        # variants = extract_variants(
-        #     ctx["_images"]["original"], ctx, applied_ops, requested_ops
-        # )
-
-        # if requested_ops[-1] in variants:
-        #     _img = variants[requested_ops[-1]]
 
         yield _img, label
 

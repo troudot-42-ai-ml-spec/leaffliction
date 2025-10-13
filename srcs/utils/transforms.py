@@ -1,11 +1,9 @@
 import numpy as np
 import tensorflow as tf
-from pathlib import Path
 from transforms.base import Transformation
 from transforms.registry import build, available_ops
-from typing import List, Literal, Dict, Any, Set, Generator, Tuple
+from typing import List, Dict, Any, Set, Generator, Tuple
 from plantcv import plantcv as pcv
-from utils.plotting.grid import show_grid
 
 
 _OP_DEPS: Dict[str, List[str]] = {
@@ -102,37 +100,6 @@ def extract_variants(  # noqa: C901
     return variants
 
 
-def process_single_image(  # noqa: C901
-    img: np.ndarray,
-    show: Literal["all", "one"],
-    ops: List[Transformation],
-    applied_ops: List[str],
-    requested_ops: List[str],
-) -> None:
-    ctx: Dict[str, Any] = {"_images": {"original": img}}
-    for op in ops:
-        img = op.apply(img, ctx)
-        try:
-            op_name = getattr(op, "name", None) or op.__class__.__name__
-            ctx["_images"][op_name] = img
-        except Exception:
-            pass
-
-    variants = extract_variants(
-        ctx["_images"]["original"], ctx, applied_ops, requested_ops
-    )
-
-    if not variants:
-        return
-
-    if show == "all":
-        show_grid(
-            list(variants.values()), list(variants.keys()), max_cols=len(variants)
-        )
-    elif show == "one":
-        pcv.plot_image(variants[requested_ops[-1]])
-
-
 def create_transformed_generator(
     dataset: tf.data.Dataset, ops: List[str]
 ) -> Generator[Tuple[np.ndarray, int], None, None]:
@@ -147,9 +114,7 @@ def create_transformed_generator(
         Generator yielding tuples of (image, label)
     """
     _ops = _build_ops(ops)
-    requested_ops = [op for op in ops]
-
-    print(f"⏳ Applying transformations: {', '.join(requested_ops)}")
+    print(f"⏳ Applying transformations: {', '.join([op for op in ops])}")
 
     # Yield transformed samples
     for image, label in dataset.as_numpy_iterator():
@@ -158,16 +123,12 @@ def create_transformed_generator(
 
         _img = image
         for op in _ops:
-            _img = op.apply(_img, ctx)
-            if _img.shape == (5, 5, 3):
-                print(f"⚠️  Transformation {op} returned a dummy image, skipping.")
-                _img = image
             try:
+                _img = op.apply(_img, ctx)
                 op_name = getattr(op, "name", None) or op.__class__.__name__
                 ctx["_images"][op_name] = _img
             except Exception as e:
-                print(f"Could not store image for operation {op}: {e}")
-                pass
+                print(f"Could not apply operation {op}: {e}")
 
         yield _img, label
 
@@ -207,11 +168,39 @@ def transform_dataset(
 
 
 def transform_one_image(
-    path: Path, ops: list[str], show: Literal["all", "one"]
-) -> None:
+    image: np.ndarray,
+    ops: list[str],
+) -> list[Tuple[np.ndarray, str]]:
+    """
+    Process a single image through transformation operations.
+
+    Args:
+        img: Input image as numpy array
+        ops: List of transformation operations to apply
+        applied_ops: List of operation names that were applied
+        requested_ops: List of operation names that were requested
+
+    Returns:
+        List of tuples containing (image, name) for each variant
+    """
+
     _ops = _build_ops(ops)
     applied_ops: list[str] = [getattr(op, "name", op.__class__.__name__) for op in _ops]
     requested_ops: list[str] = [op for op in ops]
 
-    img, _, _ = pcv.readimage(filename=str(path.absolute()))
-    process_single_image(img, show, _ops, applied_ops, requested_ops)
+    ctx: Dict[str, Any] = {"_images": {"original": image}}
+    _img = image
+
+    for op in _ops:
+        try:
+            _img = op.apply(_img, ctx)
+            op_name = getattr(op, "name", None) or op.__class__.__name__
+            ctx["_images"][op_name] = _img
+        except Exception as e:
+            print(f"Could not apply operation {op}: {e}")
+
+    variants = extract_variants(
+        ctx["_images"]["original"], ctx, applied_ops, requested_ops
+    )
+
+    return [(image, name) for name, image in variants.items()]

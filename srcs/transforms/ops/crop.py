@@ -3,6 +3,7 @@ from typing import Dict, Any
 from ..registry import register
 import cv2
 
+
 @register("crop")
 class Crop:
     name = "crop"

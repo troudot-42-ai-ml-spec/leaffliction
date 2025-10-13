@@ -1,5 +1,4 @@
 from typing import List, Dict, Tuple, Generator, Optional
-import os
 import tensorflow as tf
 import albumentations as A
 import cv2
@@ -113,7 +112,10 @@ def create_augmented_generator(
             yield augmented, class_label
 
 
-def augment_dataset(dataset: tf.data.Dataset) -> tf.data.Dataset:
+def augment_dataset(
+    dataset: tf.data.Dataset,
+    cache_path: str | None = ".tf-cache/augmentation/",
+) -> tf.data.Dataset:
     """
     Augments the dataset to balance class distributions.
 
@@ -124,11 +126,10 @@ def augment_dataset(dataset: tf.data.Dataset) -> tf.data.Dataset:
         Augmented tf.data.Dataset
     """
 
-    os.makedirs(".tf-cache/augmentation", exist_ok=True)
     augmented_dataset = tf.data.Dataset.from_generator(
         lambda: create_augmented_generator(dataset),
         output_signature=dataset.element_spec,
-    ).cache(filename=".tf-cache/augmentation/")
+    ).cache(filename=cache_path)
 
     # Force evaluation to apply augmentations immediately (and apply cardinality)
     cardinality = 0

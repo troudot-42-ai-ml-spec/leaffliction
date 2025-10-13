@@ -1,5 +1,4 @@
 import numpy as np
-import os
 import tensorflow as tf
 from pathlib import Path
 from transforms.base import Transformation
@@ -173,7 +172,11 @@ def create_transformed_generator(
         yield _img, label
 
 
-def transform_dataset(dataset: tf.data.Dataset, ops: List[str]) -> tf.data.Dataset:
+def transform_dataset(
+    dataset: tf.data.Dataset,
+    ops: List[str],
+    cache_path: str | None = ".tf-cache/transformation/",
+) -> tf.data.Dataset:
     """
     Transform the dataset to create preprocessed samples.
 
@@ -185,11 +188,10 @@ def transform_dataset(dataset: tf.data.Dataset, ops: List[str]) -> tf.data.Datas
         Transformed tf.data.Dataset
     """
 
-    os.makedirs(".tf-cache/transformation", exist_ok=True)
     transformed_dataset = tf.data.Dataset.from_generator(
         lambda: create_transformed_generator(dataset, ops),
         output_signature=dataset.element_spec,
-    ).cache(filename=".tf-cache/transformation/")
+    ).cache(filename=cache_path)
 
     # Force evaluation to apply transformations immediately (and apply cardinality)
     cardinality = 0

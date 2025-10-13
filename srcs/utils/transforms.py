@@ -166,7 +166,8 @@ def create_transformed_generator(
             try:
                 op_name = getattr(op, "name", None) or op.__class__.__name__
                 ctx["_images"][op_name] = _img
-            except Exception:
+            except Exception as e:
+                print(f"Could not store image for operation {op}: {e}")
                 pass
 
         yield _img, label

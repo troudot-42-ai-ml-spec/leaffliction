@@ -8,6 +8,9 @@ from Augmentation import save_dataset
 import shutil
 
 if __name__ == "__main__":
+    import os
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
+
     args: Namespace = parse_args()
 
     if args.mode == "multi":
@@ -29,6 +32,8 @@ if __name__ == "__main__":
                 )
                 class_names = dataset.class_names  # noqa: F841
                 transformed_dataset = transform_dataset(dataset, args.ops)
+                transformed_dataset = transformed_dataset.prefetch(tf.data.AUTOTUNE)
+
                 save_dataset(transformed_dataset, args.dst.name, class_names)
         except Exception as e:
             print(f"An error occurred: {e}")

@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 from typing import Dict, Any
 from ..registry import register
-from plantcv import plantcv as pcv
 
 
 @register("hull_xor_fill")

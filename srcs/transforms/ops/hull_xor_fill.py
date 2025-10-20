@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 from typing import Dict, Any
 from ..registry import register
+from plantcv import plantcv as pcv
 
 
 @register("hull_xor_fill")
@@ -41,8 +42,7 @@ class HullXorFill:
         hull_mask = hull_mask.astype(original_dtype)
         xor_result = xor_result.astype(original_dtype)
 
-        ctx["mask"][selected_channel] = corrected_mask
-
+        ctx["corrected_mask"] = corrected_mask
         ctx["hull_mask"] = hull_mask
         ctx["hull_xor_result"] = xor_result
 

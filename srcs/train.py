@@ -15,6 +15,7 @@ def main() -> None:
     """
     # https://github.com/tensorflow/tensorflow/issues/68593
     import os
+
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
     parser = argparse.ArgumentParser()
@@ -36,7 +37,7 @@ def main() -> None:
         with tf_cache() as cache_dirs:
             dataset = transform_dataset(
                 dataset,
-                ["remove_background", "crop_blur"],
+                ["hull_xor_fill", "remove_background", "crop_blur"],
                 cache_dirs.transformation,
             )
 

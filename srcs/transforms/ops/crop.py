@@ -1,6 +1,8 @@
 import numpy as np
 from typing import Dict, Any
 from ..registry import register
+import cv2
+from utils.hyperparams import IMG_HEIGHT, IMG_WIDTH
 
 
 @register("crop")
@@ -35,5 +37,10 @@ class Crop:
         y2 = min(h, center_y + half_height)
 
         cropped_img = img[y1:y2, x1:x2]
+        resized_img = cv2.resize(
+            cropped_img,
+            (IMG_HEIGHT, IMG_WIDTH),
+            interpolation=cv2.INTER_AREA,
+        )
 
-        return cropped_img
+        return resized_img

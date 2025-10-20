@@ -15,15 +15,11 @@ class Veins:
             raise Exception("Rgb2Lab and Mask has to be called before Veins!")
         if "l" not in ctx["lab"]:
             raise Exception("Lab has to have l channel!")
-        labs: Dict[str, np.ndarray] = ctx["lab"]
-        ct: Dict[str, np.ndarray] = {}
-        ctx["veins"] = ct
-        for channel, _img in labs.items():
-            mask_applied_otsu = pcv.apply_mask(
-                ctx["lab"]["l"], ctx["mask"][channel], "black"
-            )
-
-            viz = pcv.stdev_filter(img=mask_applied_otsu, ksize=7, borders="nearest")
-            _, masked_img = pcv.threshold.custom_range(viz, [9], [255])
-            ct[channel] = masked_img
+        selected_channel: str = ctx["selected_mask"]
+        mask_applied_otsu = pcv.apply_mask(
+            ctx["lab"]["l"], ctx["mask"][selected_channel], "black"
+        )
+        viz = pcv.stdev_filter(img=mask_applied_otsu, ksize=5, borders="nearest")
+        _, masked_img = pcv.threshold.custom_range(viz, [9], [255])
+        ctx["veins"] = masked_img
         return img

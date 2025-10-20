@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from utils.augmentation import augment_image, augment_dataset
 from utils.hyperparams import IMG_HEIGHT, IMG_WIDTH
 from pathlib import Path
+from tqdm import tqdm
+from utils.cache import tf_cache
 
 
 def save_dataset(dataset: tf.data.Dataset, name: str, class_names: List[str]) -> None:
@@ -22,11 +24,11 @@ def save_dataset(dataset: tf.data.Dataset, name: str, class_names: List[str]) ->
     directory = Path(name)
     directory.mkdir(parents=True, exist_ok=True)
 
-    for image, label in dataset.as_numpy_iterator():
+    for image, label in tqdm(dataset.as_numpy_iterator(), desc="Saving images"):
         image = image.astype(np.uint8)
 
         class_name = class_names[label]
-        subdir = Path(directory/class_name)
+        subdir = Path(directory / class_name)
         subdir.mkdir(parents=True, exist_ok=True)
         filename = f"{class_name}_{class_counters[class_name]:05d}.JPG"
 
@@ -103,8 +105,7 @@ def main() -> None:
     """
     # https://github.com/tensorflow/tensorflow/issues/68593
     import os
-
-    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -126,9 +127,12 @@ def main() -> None:
                 image_size=(IMG_HEIGHT, IMG_WIDTH),
                 batch_size=None,
             )
-            class_names = dataset.class_names  # noqa: F841
-            dataset = augment_dataset(dataset)
-            save_dataset(dataset, "augmented_directory", class_names)
+            class_names = dataset.class_names
+
+            with tf_cache() as cache_dirs:
+                dataset = augment_dataset(dataset, cache_dirs.augmentation)
+                dataset = dataset.prefetch(tf.data.AUTOTUNE)
+                save_dataset(dataset, "augmented_directory", class_names)
 
             return
 

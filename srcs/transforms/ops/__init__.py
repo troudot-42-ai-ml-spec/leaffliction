@@ -1,7 +1,7 @@
 from . import (
     gaussian,
     rgb2lab,
-    otsu,
+    mask,
     fill_holes,
     analyse,
     select_mask,
@@ -9,4 +9,5 @@ from . import (
     veins,
     crop,
     crop_blur,
+    hull_xor_fill,
 )

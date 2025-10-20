@@ -15,13 +15,16 @@ class RemoveBackground:
         if "mask" not in ctx or "selected_mask" not in ctx:
             raise Exception("SelectMask has to be called before RemoveBackground!")
         selected_channel: str = ctx["selected_mask"]
-        if img.shape[:2] != ctx["mask"][selected_channel].shape[:2]:
+        mask = (
+            ctx["mask"][selected_channel]
+            if "corrected_mask" not in ctx
+            else ctx["corrected_mask"]
+        )
+        if img.shape[:2] != mask.shape[:2]:
             raise ValueError(
                 "Cannot remove background from image which has been resized.",
                 "Please adjust the order of operations.",
             )
-        masked_img = pcv.apply_mask(
-            img=img, mask=ctx["mask"][selected_channel], mask_color=self.mask_color
-        )
+        masked_img = pcv.apply_mask(img=img, mask=mask, mask_color=self.mask_color)
         ctx["remove_background"] = masked_img
         return masked_img

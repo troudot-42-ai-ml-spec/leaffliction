@@ -12,8 +12,9 @@ class FillHoles:
 
     def apply(self, img: np.ndarray, ctx: Dict[str, Any]) -> np.ndarray:
         if "mask" not in ctx:
-            raise Exception("Otsu has to be called before FillHoles!")
-        otsu: Dict[str, np.ndarray] = ctx["mask"]
-        for channel, _img in otsu.items():
-            ctx["mask"][channel] = pcv.fill_holes(_img)
+            raise Exception("OtsuMask has to be called before FillHoles!")
+        masks: Dict[str, np.ndarray] = ctx["mask"]
+        ctx["fill_holes"] = {}
+        for channel, _img in masks.items():
+            ctx["fill_holes"][channel] = pcv.fill_holes(_img)
         return img

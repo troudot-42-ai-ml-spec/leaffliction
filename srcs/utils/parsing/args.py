@@ -23,11 +23,12 @@ def config_single_parser(parser: argparse.ArgumentParser) -> None:
         default=[
             "gaussian_blur",
             "rgb2lab",
-            "veins",
-            "otsu",
+            "mask",
             "fill_holes",
             "analyse",
             "select_mask",
+            "veins",
+            "hull_xor_fill",
             "remove_background",
             "crop",
             "crop_blur",
@@ -62,27 +63,16 @@ def config_multi_parser(parser: argparse.ArgumentParser) -> None:
         default=[
             "gaussian_blur",
             "rgb2lab",
-            "otsu",
+            "mask",
             "fill_holes",
             "analyse",
             "select_mask",
+            "hull_xor_fill",
             "remove_background",
             "crop",
             "crop_blur",
         ],
         help=f"Comma-separated list of ops. Available: {', '.join(available_ops())}",
-    )
-    _ = parser.add_argument(
-        "--save",
-        type=str,
-        choices=["all", "one"],
-        default="one",
-        help="Choice to save all ops or just the last one",
-    )
-    _ = parser.add_argument(
-        "--split",
-        action="store_true",
-        help="Split mode for multiple images",
     )
 
 
@@ -91,7 +81,7 @@ def parse_args() -> argparse.Namespace:
         description="Apply leaf image transformations (Part 3)."
     )
     subparsers = p.add_subparsers(
-        title="mode", description="modes", help="additional help"
+        title="mode", required=True, description="modes", help="additional help"
     )
     parser_single = subparsers.add_parser("single", help="Single image mode")
     parser_multi = subparsers.add_parser("multi", help="Multiple images mode")

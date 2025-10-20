@@ -5,6 +5,8 @@ from utils.hyperparams import IMG_HEIGHT, IMG_WIDTH, BATCH_SIZE
 from utils.build_model import build_model
 from utils.train_model import train_model
 from utils.parsing.model import save_to_zip
+from utils.cache import tf_cache
+from utils.transforms import transform_dataset
 
 
 def main() -> None:
@@ -32,58 +34,63 @@ def main() -> None:
         print("✅ Original dataset loaded.")
         class_names = dataset.class_names
 
-        # Split into train (70%), val (20%), test (10%)
-        print("⏳ Splitting dataset...")
-        train_dataset, remaining_dataset = tf.keras.utils.split_dataset(
-            dataset, left_size=0.7, shuffle=True, seed=42
-        )
-        validation_dataset, test_dataset = tf.keras.utils.split_dataset(
-            remaining_dataset, left_size=0.67, shuffle=True, seed=42
-        )
+        with tf_cache() as cache_dirs:
+            dataset = transform_dataset(
+                dataset,
+                ["hull_xor_fill", "remove_background", "crop_blur"],
+                cache_dirs.transformation,
+            )
 
-        train_dataset.class_names = class_names
-        train_dataset = augment_dataset(train_dataset)
-        train_dataset = train_dataset.shuffle(10_000, reshuffle_each_iteration=True)
+            # Split into train (70%), val (20%), test (10%)
+            print("⏳ Splitting dataset...")
+            train_dataset, remaining_dataset = tf.keras.utils.split_dataset(
+                dataset, left_size=0.7, shuffle=True, seed=42
+            )
+            validation_dataset, test_dataset = tf.keras.utils.split_dataset(
+                remaining_dataset, left_size=0.67, shuffle=True, seed=42
+            )
 
-        train_dataset = train_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+            train_dataset.class_names = class_names
+            train_dataset = augment_dataset(train_dataset, cache_dirs.augmentation)
+            train_dataset = train_dataset.shuffle(10_000, reshuffle_each_iteration=True)
 
-        os.makedirs(".tf-cache/validation", exist_ok=True)
-        validation_dataset = (
-            validation_dataset.cache(filename=".tf-cache/validation/")
-            .batch(BATCH_SIZE)
-            .prefetch(tf.data.AUTOTUNE)
-        )
+            train_dataset = train_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
-        os.makedirs(".tf-cache/test", exist_ok=True)
-        test_dataset = (
-            test_dataset.cache(filename=".tf-cache/test/")
-            .batch(BATCH_SIZE)
-            .prefetch(tf.data.AUTOTUNE)
-        )
+            validation_dataset = (
+                validation_dataset.cache(filename=cache_dirs.validation)
+                .batch(BATCH_SIZE)
+                .prefetch(tf.data.AUTOTUNE)
+            )
 
-        # Force evaluation to fill the cache
-        for _ in validation_dataset.as_numpy_iterator():
-            pass
-        for _ in test_dataset.as_numpy_iterator():
-            pass
+            test_dataset = (
+                test_dataset.cache(filename=cache_dirs.test)
+                .batch(BATCH_SIZE)
+                .prefetch(tf.data.AUTOTUNE)
+            )
 
-        model = build_model()
-        model.class_names = class_names
-        train_model(
-            model,
-            train_dataset,
-            validation_dataset,
-            test_dataset,
-        )
+            # Force evaluation to fill the cache
+            for _ in validation_dataset.as_numpy_iterator():
+                pass
+            for _ in test_dataset.as_numpy_iterator():
+                pass
 
-        print("⏳ Saving model and datasets to model.zip...")
-        save_to_zip(
-            model,
-            train_dataset,
-            validation_dataset,
-            test_dataset,
-        )
-        print("✅ Model and datasets saved to model.zip")
+            model = build_model()
+            model.class_names = class_names
+            train_model(
+                model,
+                train_dataset,
+                validation_dataset,
+                test_dataset,
+            )
+
+            print("⏳ Saving model and datasets to model.zip...")
+            save_to_zip(
+                model,
+                train_dataset,
+                validation_dataset,
+                test_dataset,
+            )
+            print("✅ Model and datasets saved to model.zip")
     except Exception as e:
         print(
             f"An error occurred: {e}",

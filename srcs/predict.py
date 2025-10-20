@@ -29,7 +29,7 @@ def main() -> None:
         image_array = tf.keras.utils.img_to_array(image).astype(np.uint8)
 
         transformed_images = transform_one_image(
-            image_array, ["remove_background", "crop_blur"]
+            image_array, ["hull_xor_fill", "remove_background", "crop_blur"]
         )
         transformed_image = next(
             (img for img, name in transformed_images if name == "crop_blur"), None

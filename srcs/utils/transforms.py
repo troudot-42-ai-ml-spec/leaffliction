@@ -14,6 +14,7 @@ _OP_DEPS: Dict[str, List[str]] = {
     "analyse": ["fill_holes"],
     "select_mask": ["analyse"],
     "veins": ["select_mask"],
+    "hull_xor_fill": ["select_mask"],
     "remove_background": ["select_mask"],
     "crop": ["select_mask"],
     "crop_blur": ["crop"],
@@ -85,6 +86,12 @@ def extract_variants(  # noqa: C901
 
     if "veins" in ctx:
         variants["veins"] = ctx["veins"]
+
+    if "hull_mask" in ctx:
+        variants["hull_mask"] = ctx["hull_mask"]
+
+    if "hull_xor_result" in ctx:
+        variants["hull_xor_result"] = ctx["hull_xor_result"]
 
     images = ctx.get("_images", {})
 

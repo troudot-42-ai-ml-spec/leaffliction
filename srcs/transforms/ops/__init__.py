@@ -9,4 +9,5 @@ from . import (
     veins,
     crop,
     crop_blur,
+    hull_xor_fill,
 )
